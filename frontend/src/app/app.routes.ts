@@ -1,0 +1,29 @@
+import { Routes } from '@angular/router';
+import { DashboardComponent } from './pages/dashboard.component';
+import { BorrowersComponent } from './pages/borrowers.component';
+import { BorrowerDetailComponent } from './pages/borrower-detail.component';
+import { AccountsComponent } from './pages/accounts.component';
+import { TransactionsComponent } from './pages/transactions.component';
+import { LoansComponent } from './pages/loans.component';
+import { RepaymentsComponent } from './pages/repayments.component';
+import { PullHistoryComponent } from './pages/pull-history.component';
+import { CreditResultsComponent } from './pages/credit-results.component';
+import { AuditLogsComponent } from './pages/audit-logs.component';
+import { IntegrationSettingsComponent } from './pages/integration-settings.component';
+import { LoginComponent } from './pages/login.component';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: '', component: DashboardComponent },
+  { path: 'borrowers', component: BorrowersComponent },
+  { path: 'borrowers/:reference', component: BorrowerDetailComponent },
+  { path: 'accounts', component: AccountsComponent },
+  { path: 'transactions', component: TransactionsComponent },
+  { path: 'loans', component: LoansComponent },
+  { path: 'repayments', component: RepaymentsComponent },
+  { path: 'pull-history', component: PullHistoryComponent },
+  { path: 'credit-results', component: CreditResultsComponent },
+  { path: 'audit-logs', component: AuditLogsComponent },
+  { path: 'integration-settings', component: IntegrationSettingsComponent },
+  { path: '**', redirectTo: '' },
+];
