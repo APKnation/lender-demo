@@ -1,0 +1,10 @@
+{% extends "admin/change_form.html" %}
+{% load i18n %}
+{% block extra_buttons %}
+{{ block.super }}
+{% if not original.is_active %}
+    <input type="submit" value="{% trans 'Activate' %}" name="_activate" {{ onclick_attrib }} />
+{% else %}
+    <input type="submit" value="{% trans 'Deactivate' %}" name="_deactivate" {{ onclick_attrib }} />
+{% endif %}
+{% endblock %}
