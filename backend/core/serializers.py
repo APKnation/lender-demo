@@ -205,9 +205,7 @@ class BorrowerWriteSerializer(serializers.ModelSerializer):
         from django.conf import settings as _s
         inst = validated_data.pop("institution", None)
         if inst is None:
-            inst = __import__("core.models", fromlist=["Institution"]).Institution.objects.get(
-                lender_id=_s.LENDER_ID
-            )
+            inst = Institution.objects.get(lender_id=_s.LENDER_ID)
         validated_data["institution"] = inst
         if not validated_data.get("borrower_reference"):
             validated_data["borrower_reference"] = self._generate_reference(inst)
@@ -215,12 +213,11 @@ class BorrowerWriteSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def _generate_reference(inst):
-        from .models import Borrower as _B
         prefix = getattr(__import__("django.conf", fromlist=["settings"]).settings,
                          "BORROWER_REF_PREFIX", "BRW-TZ")
-        last = _B.objects.filter(borrower_reference__startswith=prefix).order_by(
-            "borrower_reference"
-        ).last()
+        last = Borrower.objects.filter(
+            borrower_reference__startswith=f"{prefix}-"
+        ).order_by("borrower_reference").last()
         if last:
             try:
                 num = int(last.borrower_reference.split("-")[-1]) + 1

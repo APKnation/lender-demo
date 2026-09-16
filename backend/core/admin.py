@@ -8,6 +8,7 @@ Features:
   * Dedicated action views for activate / deactivate
 """
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import redirect, render
@@ -26,6 +27,7 @@ from .models import (
     BusinessInformation,
     Consent,
     CreditResult,
+    CustomUser,
     IntegrationCredential,
     Institution,
     Loan,
@@ -324,6 +326,28 @@ class AuditLogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+# ------------------------------------------------------------------ #
+#  Custom user
+# ------------------------------------------------------------------ #
+@admin.register(CustomUser)
+class CustomUserAdmin(BaseUserAdmin):
+    list_display = ["email", "full_name", "role", "is_active", "is_staff", "date_joined"]
+    list_filter = ["role", "is_active", "is_staff"]
+    search_fields = ["email", "full_name"]
+    ordering = ["email"]
+    fieldsets = (
+        (None, {"fields": ("email", "password")}),
+        ("Personal info", {"fields": ("full_name", "role")}),
+        ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions")}),
+    )
+    add_fieldsets = (
+        (None, {
+            "classes": ("wide",),
+            "fields": ("email", "full_name", "role", "password1", "password2"),
+        }),
+    )
 
 
 # ------------------------------------------------------------------ #
