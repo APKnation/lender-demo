@@ -583,14 +583,14 @@ class AuditLog(models.Model):
     def record(cls, action, status, identity="", borrower_reference="",
                source_ip=None, request_id="", correlation_id="",
                error_message="", fields_requested=None, fields_returned=None,
-               log_type="general", metadata=None):
+               log_type="general", request_reference=None, metadata=None):
         """Convenience factory – creates an audit log entry."""
         return cls.objects.create(
             action=action,
             status=status,
             log_type=log_type,
             borrower_reference=borrower_reference,
-            request_reference=None,
+            request_reference=request_reference,
             identity=identity,
             source_ip=source_ip,
             request_id=request_id,

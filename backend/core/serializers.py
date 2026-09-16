@@ -222,9 +222,9 @@ class BorrowerWriteSerializer(serializers.ModelSerializer):
             try:
                 num = int(last.borrower_reference.split("-")[-1]) + 1
             except (ValueError, IndexError):
-                num = 1
+                num = 1001
         else:
-            num = 1
+            num = 1001
         return f"{prefix}-{num:04d}"
 
     def to_representation(self, instance):

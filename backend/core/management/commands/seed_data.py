@@ -222,7 +222,9 @@ class Command(BaseCommand):
                     transaction_frequency=FrequencyType.MONTHLY,
                     income_frequency=FrequencyType.MONTHLY,
                     balance_stability=BalanceStability.STABLE,
-                    opened_at=today - timedelta(days=365),
+                    opened_at=timezone.make_aware(__import__("datetime").datetime.combine(
+                        today - timedelta(days=365), __import__("datetime").time.min
+                    )),
                 )
 
                 for j in range(3):
@@ -239,10 +241,13 @@ class Command(BaseCommand):
                         balance_after = account.balance - amount
                     else:
                         balance_after = account.balance + amount
+                    txn_tz = timezone.make_aware(__import__("datetime").datetime.combine(
+                        today - timedelta(days=20 - k), __import__("datetime").time.min
+                    ))
                     Transaction.objects.create(
                         transaction_id=f"TXN-NMB-{ref_counter:04d}-{k:02d}",
                         account=account,
-                        transaction_date=today - timedelta(days=20 - k),
+                        transaction_date=txn_tz,
                         value_date=today - timedelta(days=20 - k),
                         type=t_type,
                         category="TRANSFER" if "TRANSFER" in t_type else "CASH",
