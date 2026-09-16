@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, IntegrationCredential } from '../services/api.service';
@@ -30,9 +30,9 @@ import { ApiService, IntegrationCredential } from '../services/api.service';
         </form>
       </div>
 
-      <div class="card" *ngIf="createdKey">
+      <div class="card" *ngIf="createdKey()">
         <h2>New Key Created (show once)</h2>
-        <code class="key">{{ createdKey }}</code>
+        <code class="key">{{ createdKey() }}</code>
         <p class="warning">Store this key securely. It will not be shown again.</p>
       </div>
 
@@ -41,7 +41,7 @@ import { ApiService, IntegrationCredential } from '../services/api.service';
         <table class="data-table">
           <thead><tr><th>Name</th><th>Lender ID</th><th>Role</th><th>Prefix</th><th>Status</th><th>Created</th><th>Last Used</th></tr></thead>
           <tbody>
-            <tr *ngFor="let c of credentials">
+            <tr *ngFor="let c of credentials()">
               <td>{{ c.name }}</td>
               <td>{{ c.lender_id }}</td>
               <td>{{ c.role }}</td>
@@ -71,26 +71,26 @@ import { ApiService, IntegrationCredential } from '../services/api.service';
   `]
 })
 export class IntegrationSettingsComponent implements OnInit {
-  credentials: IntegrationCredential[] = [];
-  createdKey: string | null = null;
+  credentials = signal<IntegrationCredential[]>([]);
+  createdKey = signal<string | null>(null);
   newKey = { name: '', role: 'CENTRAL_SYSTEM', lender_id: '' };
   private api = inject(ApiService);
 
   ngOnInit(): void {
     this.api.getCredentials().subscribe({
-      next: (data) => { this.credentials = data; },
+      next: (data) => { this.credentials.set(data); },
     });
   }
 
   createKey(): void {
     this.api.createCredential(this.newKey.name, this.newKey.role, ['pull', 'push'], 1, this.newKey.lender_id).subscribe({
       next: (resp: any) => {
-        this.createdKey = resp.plaintext_key;
-        this.credentials = [...this.credentials, {
+        this.createdKey.set(resp.plaintext_key);
+        this.credentials.update(list => [...list, {
           name: this.newKey.name, lender_id: this.newKey.lender_id,
           role: this.newKey.role, key_prefix: '', is_active: true,
           created_at: new Date().toISOString(), last_used_at: null,
-        }];
+        }]);
         this.newKey = { name: '', role: 'CENTRAL_SYSTEM', lender_id: '' };
       },
       error: () => { /* show error */ },

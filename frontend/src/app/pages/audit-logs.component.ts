@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService, AuditLog } from '../services/api.service';
@@ -19,14 +19,14 @@ import { ApiService, AuditLog } from '../services/api.service';
         <button (click)="load()">Filter</button>
       </div>
 
-      <div class="loading" *ngIf="loading">Loading audit logs…</div>
-      <table class="data-table" *ngIf="!loading">
+      <div class="loading" *ngIf="loading()">Loading audit logs…</div>
+      <table class="data-table" *ngIf="!loading()">
         <thead>
           <tr><th>Timestamp</th><th>Action</th><th>Status</th><th>Borrower</th>
               <th>Identity</th><th>IP</th><th>Request ID</th><th>Correlation ID</th><th>Error</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let log of logs">
+          <tr *ngFor="let log of logs()">
             <td>{{ log.timestamp | date:'short' }}</td>
             <td>{{ log.action }}</td>
             <td><span class="badge" [class.success]="log.status==='SUCCESS'" [class.danger]="log.status==='FAILURE'">{{ log.status }}</span></td>
@@ -39,7 +39,7 @@ import { ApiService, AuditLog } from '../services/api.service';
           </tr>
         </tbody>
       </table>
-      <p *ngIf="!loading && logs.length === 0" class="no-results">No audit logs found.</p>
+      <p *ngIf="!loading() && logs().length === 0" class="no-results">No audit logs found.</p>
     </div>
   `,
   styles: [`
@@ -59,8 +59,8 @@ import { ApiService, AuditLog } from '../services/api.service';
   `]
 })
 export class AuditLogsComponent implements OnInit {
-  logs: AuditLog[] = [];
-  loading = true;
+  logs = signal<AuditLog[]>([]);
+  loading = signal(true);
   filters: Record<string, string> = {};
   private api = inject(ApiService);
 
@@ -69,10 +69,10 @@ export class AuditLogsComponent implements OnInit {
   }
 
   load(): void {
-    this.loading = true;
+    this.loading.set(true);
     this.api.getAuditLogs(this.filters).subscribe({
-      next: (data) => { this.logs = data; this.loading = false; },
-      error: () => { this.loading = false; },
+      next: (data) => { this.logs.set(data); this.loading.set(false); },
+      error: () => { this.loading.set(false); },
     });
   }
 }

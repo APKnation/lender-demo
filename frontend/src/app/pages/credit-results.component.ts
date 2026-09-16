@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, CreditResult } from '../services/api.service';
 
@@ -11,14 +11,14 @@ import { ApiService, CreditResult } from '../services/api.service';
       <h1>Credit Results</h1>
       <p class="subtitle">Credit score results received from the DAIRE Central System.</p>
 
-      <div class="loading" *ngIf="loading">Loading credit results…</div>
-      <table class="data-table" *ngIf="!loading">
+      <div class="loading" *ngIf="loading()">Loading credit results…</div>
+      <table class="data-table" *ngIf="!loading()">
         <thead>
           <tr><th>Time</th><th>Borrower</th><th>Score</th><th>Reputation</th>
               <th>Risk</th><th>Ruleset</th><th>Model</th><th>Hash</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of results">
+          <tr *ngFor="let r of results()">
             <td>{{ r.received_at | date:'short' }}</td>
             <td>{{ r.borrower_reference }}</td>
             <td>{{ r.credit_score }}</td>
@@ -30,7 +30,7 @@ import { ApiService, CreditResult } from '../services/api.service';
           </tr>
         </tbody>
       </table>
-      <p *ngIf="!loading && results.length === 0" class="no-results">No credit results found.</p>
+      <p *ngIf="!loading() && results().length === 0" class="no-results">No credit results found.</p>
     </div>
   `,
   styles: [`
@@ -45,14 +45,14 @@ import { ApiService, CreditResult } from '../services/api.service';
   `]
 })
 export class CreditResultsComponent implements OnInit {
-  results: CreditResult[] = [];
-  loading = true;
+  results = signal<CreditResult[]>([]);
+  loading = signal(true);
   private api = inject(ApiService);
 
   ngOnInit(): void {
     this.api.getCreditResults().subscribe({
-      next: (data) => { this.results = data; this.loading = false; },
-      error: () => { this.loading = false; },
+      next: (data) => { this.results.set(data); this.loading.set(false); },
+      error: () => { this.loading.set(false); },
     });
   }
 }

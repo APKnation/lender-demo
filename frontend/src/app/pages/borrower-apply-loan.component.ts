@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -17,22 +17,22 @@ import { ApiService, LoanApplicationResponse } from '../services/api.service';
       </div>
 
       <!-- Success State -->
-      <div *ngIf="result" class="result-card">
+      <div *ngIf="result() as res" class="result-card">
         <div class="result-icon">✅</div>
         <h2>Application Submitted!</h2>
-        <p>{{ result.message }}</p>
+        <p>{{ res.message }}</p>
         <div class="result-details">
-          <div class="result-row"><span>Loan ID</span><strong>{{ result.loan_id }}</strong></div>
-          <div class="result-row"><span>Amount</span><strong>TZS {{ formatNum(result.amount) }}</strong></div>
-          <div class="result-row"><span>Duration</span><strong>{{ result.duration_months }} months</strong></div>
-          <div class="result-row"><span>Status</span><span class="badge badge-warning">{{ result.status }}</span></div>
+          <div class="result-row"><span>Loan ID</span><strong>{{ res.loan_id }}</strong></div>
+          <div class="result-row"><span>Amount</span><strong>TZS {{ formatNum(res.amount) }}</strong></div>
+          <div class="result-row"><span>Duration</span><strong>{{ res.duration_months }} months</strong></div>
+          <div class="result-row"><span>Status</span><span class="badge badge-warning">{{ res.status }}</span></div>
         </div>
         <a routerLink="/portal" class="btn btn-primary" style="margin-top:1.5rem">Return to My Account</a>
       </div>
 
       <!-- Application Form -->
-      <div *ngIf="!result" class="apply-card card">
-        <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+      <div *ngIf="!result()" class="apply-card card">
+        <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
 
         <form (ngSubmit)="onSubmit()" #f="ngForm">
           <div class="form-row">
@@ -117,10 +117,10 @@ import { ApiService, LoanApplicationResponse } from '../services/api.service';
             id="submit-loan-btn"
             type="submit"
             class="btn btn-primary btn-lg"
-            [disabled]="loading || !form.amount || !form.duration_months || !form.purpose || !agreeTerms"
+            [disabled]="loading() || !form.amount || !form.duration_months || !form.purpose || !agreeTerms"
           >
-            <span *ngIf="loading" class="spinner"></span>
-            {{ loading ? 'Submitting…' : 'Submit Loan Application' }}
+            <span *ngIf="loading()" class="spinner"></span>
+            {{ loading() ? 'Submitting…' : 'Submit Loan Application' }}
           </button>
         </form>
       </div>
@@ -196,9 +196,9 @@ export class BorrowerApplyLoanComponent {
   private api = inject(ApiService);
   private router = inject(Router);
 
-  loading = false;
-  error = '';
-  result: LoanApplicationResponse | null = null;
+  loading = signal(false);
+  error = signal('');
+  result = signal<LoanApplicationResponse | null>(null);
   agreeTerms = false;
 
   form = { amount: null as number | null, duration_months: '', purpose: '' };
@@ -230,18 +230,18 @@ export class BorrowerApplyLoanComponent {
 
   onSubmit(): void {
     if (!this.form.amount || !this.form.duration_months || !this.form.purpose) return;
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
 
     this.api.portalApplyLoan({
       amount: this.form.amount,
       duration_months: Number(this.form.duration_months),
       purpose: this.form.purpose,
     }).subscribe({
-      next: res => { this.result = res; this.loading = false; },
+      next: res => { this.result.set(res); this.loading.set(false); },
       error: err => {
-        this.error = err.error?.detail || 'Application failed. Please try again.';
-        this.loading = false;
+        this.error.set(err.error?.detail || 'Application failed. Please try again.');
+        this.loading.set(false);
       },
     });
   }

@@ -1,5 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule, CurrencyPipe, DatePipe } from '@angular/common';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.service';
 
@@ -7,23 +7,22 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterLink],
-  providers: [CurrencyPipe, DatePipe],
   template: `
     <div class="dashboard">
 
       <!-- Loading -->
-      <div *ngIf="loading" class="loading-page">
+      <div *ngIf="loading()" class="loading-page">
         <div class="spinner" style="width:36px;height:36px;border-width:3px"></div>
         <p>Loading dashboard data…</p>
       </div>
 
-      <ng-container *ngIf="!loading">
+      <ng-container *ngIf="!loading()">
         <!-- KPI Cards -->
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-icon" style="background:#dbeafe;color:#1e40af">👥</div>
             <div class="kpi-body">
-              <div class="kpi-value">{{ borrowers.length }}</div>
+              <div class="kpi-value">{{ borrowers().length }}</div>
               <div class="kpi-label">Total Borrowers</div>
             </div>
             <a routerLink="/borrowers" class="kpi-link">View →</a>
@@ -31,7 +30,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
           <div class="kpi-card">
             <div class="kpi-icon" style="background:#d1fae5;color:#065f46">🏦</div>
             <div class="kpi-body">
-              <div class="kpi-value">{{ totalAccounts }}</div>
+              <div class="kpi-value">{{ totalAccounts() }}</div>
               <div class="kpi-label">Active Accounts</div>
             </div>
             <a routerLink="/accounts" class="kpi-link">View →</a>
@@ -39,7 +38,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
           <div class="kpi-card">
             <div class="kpi-icon" style="background:#fef3c7;color:#92400e">💳</div>
             <div class="kpi-body">
-              <div class="kpi-value">{{ totalLoans }}</div>
+              <div class="kpi-value">{{ totalLoans() }}</div>
               <div class="kpi-label">Active Loans</div>
             </div>
             <a routerLink="/loans" class="kpi-link">View →</a>
@@ -47,14 +46,14 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
           <div class="kpi-card">
             <div class="kpi-icon" style="background:#ede9fe;color:#5b21b6">💰</div>
             <div class="kpi-body">
-              <div class="kpi-value">{{ formatBalance(totalBalance) }}</div>
+              <div class="kpi-value">{{ formatBalance(totalBalance()) }}</div>
               <div class="kpi-label">Total Portfolio Balance</div>
             </div>
           </div>
           <div class="kpi-card">
             <div class="kpi-icon" style="background:#fee2e2;color:#991b1b">⚠️</div>
             <div class="kpi-body">
-              <div class="kpi-value">{{ highRiskCount }}</div>
+              <div class="kpi-value">{{ highRiskCount() }}</div>
               <div class="kpi-label">High Risk Borrowers</div>
             </div>
             <a routerLink="/credit-results" class="kpi-link">View →</a>
@@ -62,7 +61,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
           <div class="kpi-card">
             <div class="kpi-icon" style="background:#f0fdf4;color:#166534">📋</div>
             <div class="kpi-body">
-              <div class="kpi-value">{{ recentLogs.length }}</div>
+              <div class="kpi-value">{{ recentLogs().length }}</div>
               <div class="kpi-label">Recent Audit Events</div>
             </div>
             <a routerLink="/audit-logs" class="kpi-link">View →</a>
@@ -93,7 +92,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let b of borrowers.slice(0, 8)">
+                  <tr *ngFor="let b of borrowers().slice(0, 8)">
                     <td><code class="ref">{{ b.borrower_reference }}</code></td>
                     <td><strong>{{ b.full_name }}</strong><br><small class="text-muted">{{ b.gender }}</small></td>
                     <td>{{ formatEmployment(b.employment_status) }}</td>
@@ -115,7 +114,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
               <a routerLink="/credit-results" class="btn btn-outline btn-sm">View All</a>
             </div>
             <div class="credit-list">
-              <div *ngFor="let r of recentCreditResults" class="credit-item">
+              <div *ngFor="let r of recentCreditResults()" class="credit-item">
                 <div class="credit-ref">{{ r.borrower_reference }}</div>
                 <div class="credit-score" [class]="scoreClass(r.credit_score)">
                   {{ r.credit_score || 'N/A' }}
@@ -125,7 +124,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
                 </div>
                 <div class="text-muted" style="font-size:0.75rem">{{ r.received_at | date:'dd MMM' }}</div>
               </div>
-              <div *ngIf="recentCreditResults.length === 0" class="empty-state">
+              <div *ngIf="recentCreditResults().length === 0" class="empty-state">
                 <div class="empty-icon">⭐</div>
                 <p>No credit results yet</p>
               </div>
@@ -151,7 +150,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let log of recentLogs">
+                  <tr *ngFor="let log of recentLogs()">
                     <td class="text-muted" style="white-space:nowrap;font-size:0.78rem">
                       {{ log.timestamp | date:'dd MMM HH:mm' }}
                     </td>
@@ -165,7 +164,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
                     <td class="text-muted" style="font-size:0.8rem">{{ log.identity || '–' }}</td>
                     <td class="text-muted" style="font-size:0.78rem">{{ log.source_ip || '–' }}</td>
                   </tr>
-                  <tr *ngIf="recentLogs.length === 0">
+                  <tr *ngIf="recentLogs().length === 0">
                     <td colspan="6" class="empty-state">No audit logs found.</td>
                   </tr>
                 </tbody>
@@ -180,7 +179,7 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
               <a routerLink="/loans" class="btn btn-outline btn-sm">View All</a>
             </div>
             <div class="loan-status-list">
-              <div *ngFor="let s of loanStats" class="loan-stat">
+              <div *ngFor="let s of loanStats()" class="loan-stat">
                 <div class="loan-stat-bar-wrap">
                   <div class="loan-stat-label">{{ s.label }}</div>
                   <div class="loan-stat-count">{{ s.count }}</div>
@@ -303,26 +302,26 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
 export class DashboardComponent implements OnInit {
   private api = inject(ApiService);
 
-  borrowers: Borrower[] = [];
-  recentLogs: AuditLog[] = [];
-  recentCreditResults: CreditResult[] = [];
-  loading = true;
+  borrowers = signal<Borrower[]>([]);
+  recentLogs = signal<AuditLog[]>([]);
+  recentCreditResults = signal<CreditResult[]>([]);
+  loading = signal(true);
 
-  get totalAccounts(): number {
-    return this.borrowers.reduce((s, b) => s + (b.account_information?.active_accounts || 0), 0);
-  }
-  get totalLoans(): number {
-    return this.borrowers.reduce((s, b) => s + (b.loans?.filter(l => l.status === 'ACTIVE').length || 0), 0);
-  }
-  get totalBalance(): number {
-    return this.borrowers.reduce((s, b) => s + (Number(b.account_information?.total_balance) || 0), 0);
-  }
-  get highRiskCount(): number {
-    return this.recentCreditResults.filter(r => r.risk_level === 'HIGH').length;
-  }
+  readonly totalAccounts = computed(() =>
+    this.borrowers().reduce((s, b) => s + (b.account_information?.active_accounts || 0), 0)
+  );
+  readonly totalLoans = computed(() =>
+    this.borrowers().reduce((s, b) => s + (b.loans?.filter(l => l.status === 'ACTIVE').length || 0), 0)
+  );
+  readonly totalBalance = computed(() =>
+    this.borrowers().reduce((s, b) => s + (Number(b.account_information?.total_balance) || 0), 0)
+  );
+  readonly highRiskCount = computed(() =>
+    this.recentCreditResults().filter(r => r.risk_level === 'HIGH').length
+  );
 
-  get loanStats() {
-    const allLoans = this.borrowers.flatMap(b => b.loans || []);
+  readonly loanStats = computed(() => {
+    const allLoans = this.borrowers().flatMap(b => b.loans || []);
     const total = allLoans.length || 1;
     const statuses = ['ACTIVE', 'PENDING', 'PAID_OFF', 'DEFAULTED'];
     const colors = ['#1a56db', '#f59e0b', '#059669', '#dc2626'];
@@ -330,25 +329,25 @@ export class DashboardComponent implements OnInit {
       const count = allLoans.filter(l => l.status === s).length;
       return { label: s.replace('_', ' '), count, pct: Math.round(count / total * 100), color: colors[i] };
     }).filter(s => s.count > 0);
-  }
+  });
 
   ngOnInit(): void {
     let done = 0;
     const total = 3;
-    const checkDone = () => { if (++done === total) this.loading = false; };
+    const checkDone = () => { if (++done === total) this.loading.set(false); };
 
     this.api.listBorrowers().subscribe({
-      next: data => { this.borrowers = Array.isArray(data) ? data : []; checkDone(); },
+      next: data => { this.borrowers.set(Array.isArray(data) ? data : []); checkDone(); },
       error: () => checkDone(),
     });
 
     this.api.getAuditLogs({ limit: '20' }).subscribe({
-      next: data => { this.recentLogs = Array.isArray(data) ? data.slice(0, 20) : []; checkDone(); },
+      next: data => { this.recentLogs.set(Array.isArray(data) ? data.slice(0, 20) : []); checkDone(); },
       error: () => checkDone(),
     });
 
     this.api.getCreditResults().subscribe({
-      next: data => { this.recentCreditResults = Array.isArray(data) ? data : []; checkDone(); },
+      next: data => { this.recentCreditResults.set(Array.isArray(data) ? data : []); checkDone(); },
       error: () => checkDone(),
     });
   }

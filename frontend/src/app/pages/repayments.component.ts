@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, Repayment } from '../services/api.service';
 
@@ -11,17 +11,17 @@ import { ApiService, Repayment } from '../services/api.service';
       <h1>Repayments</h1>
       <p class="subtitle">All loan repayments loaded from backend APIs.</p>
 
-      <div class="loading" *ngIf="loading">Loading repayments…</div>
-      <div class="error" *ngIf="error">{{ error }}</div>
+      <div class="loading" *ngIf="loading()">Loading repayments…</div>
+      <div class="error" *ngIf="error()">{{ error() }}</div>
 
-      <table class="data-table" *ngIf="!loading">
+      <table class="data-table" *ngIf="!loading()">
         <thead>
           <tr><th>Loan</th><th>Date</th><th>Due Date</th><th>Amount</th>
               <th>Days Overdue</th><th>Missed</th><th>Late</th><th>Status</th><th>Currency</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let r of repayments">
+          <tr *ngFor="let r of repayments()">
             <td>{{ r.loan_reference }}</td>
             <td>{{ r.repayment_date | date:'shortDate' }}</td>
             <td>{{ r.due_date | date:'shortDate' }}</td>
@@ -34,7 +34,7 @@ import { ApiService, Repayment } from '../services/api.service';
           </tr>
         </tbody>
       </table>
-      <p *ngIf="!loading && repayments.length === 0" class="no-results">No repayments found.</p>
+      <p *ngIf="!loading() && repayments().length === 0" class="no-results">No repayments found.</p>
     </div>
   `,
   styles: [`
@@ -49,15 +49,15 @@ import { ApiService, Repayment } from '../services/api.service';
   `]
 })
 export class RepaymentsComponent implements OnInit {
-  repayments: Repayment[] = [];
-  loading = true;
-  error = '';
+  repayments = signal<Repayment[]>([]);
+  loading = signal(true);
+  error = signal('');
   private api = inject(ApiService);
 
   ngOnInit(): void {
     this.api.listRepayments().subscribe({
-      next: (data) => { this.repayments = data; this.loading = false; },
-      error: () => { this.error = 'Failed to load repayments.'; this.loading = false; },
+      next: (data) => { this.repayments.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Failed to load repayments.'); this.loading.set(false); },
     });
   }
 }

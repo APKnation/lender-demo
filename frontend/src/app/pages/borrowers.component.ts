@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, Borrower } from '../services/api.service';
 
@@ -11,10 +11,10 @@ import { ApiService, Borrower } from '../services/api.service';
       <h1>Borrowers</h1>
       <p class="subtitle">All borrowers loaded from backend APIs.</p>
 
-      <div class="loading" *ngIf="loading">Loading borrowers…</div>
-      <div class="error" *ngIf="error">{{ error }}</div>
+      <div class="loading" *ngIf="loading()">Loading borrowers…</div>
+      <div class="error" *ngIf="error()">{{ error() }}</div>
 
-      <table class="data-table" *ngIf="!loading">
+      <table class="data-table" *ngIf="!loading()">
         <thead>
           <tr>
             <th>Borrower Ref</th><th>Customer ID</th><th>Name</th><th>Age</th>
@@ -22,7 +22,7 @@ import { ApiService, Borrower } from '../services/api.service';
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let b of borrowers">
+          <tr *ngFor="let b of borrowers()">
             <td><a [routerLink]="['/borrowers', b.borrower_reference]">{{ b.borrower_reference }}</a></td>
             <td>{{ b.customer_id }}</td>
             <td>{{ b.full_name }}</td>
@@ -38,7 +38,7 @@ import { ApiService, Borrower } from '../services/api.service';
           </tr>
         </tbody>
       </table>
-      <p *ngIf="!loading && borrowers.length === 0" class="no-results">No borrowers found.</p>
+      <p *ngIf="!loading() && borrowers().length === 0" class="no-results">No borrowers found.</p>
     </div>
   `,
   styles: [`
@@ -57,15 +57,15 @@ import { ApiService, Borrower } from '../services/api.service';
   `]
 })
 export class BorrowersComponent implements OnInit {
-  borrowers: Borrower[] = [];
-  loading = true;
-  error = '';
+  borrowers = signal<Borrower[]>([]);
+  loading = signal(true);
+  error = signal('');
   private api = inject(ApiService);
 
   ngOnInit(): void {
     this.api.listBorrowers().subscribe({
-      next: (data) => { this.borrowers = data; this.loading = false; },
-      error: () => { this.error = 'Failed to load borrowers.'; this.loading = false; },
+      next: (data) => { this.borrowers.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Failed to load borrowers.'); this.loading.set(false); },
     });
   }
 }

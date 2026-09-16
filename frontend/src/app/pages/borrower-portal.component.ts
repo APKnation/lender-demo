@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService, Borrower } from '../services/api.service';
@@ -11,18 +11,18 @@ import { AuthService } from '../services/auth.service';
   template: `
     <div class="portal-page">
       <!-- Loading -->
-      <div *ngIf="loading" class="loading-page">
+      <div *ngIf="loading()" class="loading-page">
         <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
         <p>Loading your account…</p>
       </div>
 
-      <ng-container *ngIf="!loading && borrower">
+      <ng-container *ngIf="!loading() && borrower() as b">
         <!-- Welcome Banner -->
         <div class="welcome-banner">
           <div class="welcome-avatar">{{ initials }}</div>
           <div>
-            <h1>Welcome, {{ borrower.full_name }}</h1>
-            <p class="text-muted">Customer ID: {{ borrower.customer_id }} · {{ borrower.borrower_reference }}</p>
+            <h1>Welcome, {{ b.full_name }}</h1>
+            <p class="text-muted">Customer ID: {{ b.customer_id }} · {{ b.borrower_reference }}</p>
           </div>
           <a routerLink="/portal/apply-loan" class="btn btn-primary" style="margin-left:auto">
             + Apply for Loan
@@ -32,7 +32,7 @@ import { AuthService } from '../services/auth.service';
         <!-- Quick Stats -->
         <div class="stats-row">
           <div class="stat-box">
-            <div class="stat-val">{{ borrower.account_information?.total_accounts || 0 }}</div>
+            <div class="stat-val">{{ b.account_information?.total_accounts || 0 }}</div>
             <div class="stat-lbl">Accounts</div>
           </div>
           <div class="stat-box">
@@ -40,11 +40,11 @@ import { AuthService } from '../services/auth.service';
             <div class="stat-lbl">Active Loans</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val">TZS {{ formatNum(borrower.account_information?.total_balance || 0) }}</div>
+            <div class="stat-val">TZS {{ formatNum(b.account_information?.total_balance || 0) }}</div>
             <div class="stat-lbl">Total Balance</div>
           </div>
           <div class="stat-box">
-            <div class="stat-val">{{ borrower.employment_status }}</div>
+            <div class="stat-val">{{ b.employment_status }}</div>
             <div class="stat-lbl">Employment</div>
           </div>
         </div>
@@ -54,21 +54,21 @@ import { AuthService } from '../services/auth.service';
           <div class="card">
             <h2 class="section-title">Personal Information</h2>
             <div class="info-grid">
-              <div class="info-row"><span class="info-label">Full Name</span><span>{{ borrower.full_name }}</span></div>
-              <div class="info-row"><span class="info-label">Age</span><span>{{ borrower.age }}</span></div>
-              <div class="info-row"><span class="info-label">Gender</span><span>{{ borrower.gender }}</span></div>
-              <div class="info-row"><span class="info-label">Employment</span><span>{{ borrower.employment_status }}</span></div>
-              <div class="info-row"><span class="info-label">Monthly Income</span><span>TZS {{ formatNum(borrower.income) }}</span></div>
-              <div class="info-row"><span class="info-label">Currency</span><span>{{ borrower.currency }}</span></div>
+              <div class="info-row"><span class="info-label">Full Name</span><span>{{ b.full_name }}</span></div>
+              <div class="info-row"><span class="info-label">Age</span><span>{{ b.age }}</span></div>
+              <div class="info-row"><span class="info-label">Gender</span><span>{{ b.gender }}</span></div>
+              <div class="info-row"><span class="info-label">Employment</span><span>{{ b.employment_status }}</span></div>
+              <div class="info-row"><span class="info-label">Monthly Income</span><span>TZS {{ formatNum(b.income) }}</span></div>
+              <div class="info-row"><span class="info-label">Currency</span><span>{{ b.currency }}</span></div>
             </div>
 
-            <div *ngIf="borrower.business_information?.business_name" style="margin-top:1.25rem">
+            <div *ngIf="b.business_information?.business_name" style="margin-top:1.25rem">
               <h3 style="font-size:0.95rem;margin-bottom:0.75rem;color:var(--text-secondary)">Business Information</h3>
               <div class="info-grid">
-                <div class="info-row"><span class="info-label">Business Name</span><span>{{ borrower.business_information.business_name }}</span></div>
-                <div class="info-row"><span class="info-label">Type</span><span>{{ borrower.business_information.business_type }}</span></div>
-                <div class="info-row"><span class="info-label">Industry</span><span>{{ borrower.business_information.industry }}</span></div>
-                <div class="info-row"><span class="info-label">Annual Revenue</span><span>TZS {{ formatNum(borrower.business_information.annual_revenue) }}</span></div>
+                <div class="info-row"><span class="info-label">Business Name</span><span>{{ b.business_information.business_name }}</span></div>
+                <div class="info-row"><span class="info-label">Type</span><span>{{ b.business_information.business_type }}</span></div>
+                <div class="info-row"><span class="info-label">Industry</span><span>{{ b.business_information.industry }}</span></div>
+                <div class="info-row"><span class="info-label">Annual Revenue</span><span>TZS {{ formatNum(b.business_information.annual_revenue) }}</span></div>
               </div>
             </div>
           </div>
@@ -76,7 +76,7 @@ import { AuthService } from '../services/auth.service';
           <!-- Accounts -->
           <div class="card">
             <h2 class="section-title">My Accounts</h2>
-            <div *ngFor="let acc of borrower.accounts" class="account-card">
+            <div *ngFor="let acc of b.accounts" class="account-card">
               <div class="account-header">
                 <div>
                   <div class="account-name">{{ acc.account_name }}</div>
@@ -96,7 +96,7 @@ import { AuthService } from '../services/auth.service';
                 <span>Since {{ acc.customer_since }}</span>
               </div>
             </div>
-            <div *ngIf="!borrower.accounts?.length" class="empty-state">
+            <div *ngIf="!b.accounts?.length" class="empty-state">
               <div class="empty-icon">🏦</div><p>No accounts found</p>
             </div>
           </div>
@@ -109,7 +109,7 @@ import { AuthService } from '../services/auth.service';
             <a routerLink="/portal/apply-loan" class="btn btn-primary btn-sm">+ Apply for Loan</a>
           </div>
 
-          <div *ngIf="borrower.loans?.length" class="table-wrap" style="margin-top:1rem">
+          <div *ngIf="b.loans?.length" class="table-wrap" style="margin-top:1rem">
             <table class="data-table">
               <thead>
                 <tr>
@@ -123,7 +123,7 @@ import { AuthService } from '../services/auth.service';
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let loan of borrower.loans">
+                <tr *ngFor="let loan of b.loans">
                   <td><code style="font-size:0.75rem">{{ loan.loan_id }}</code></td>
                   <td>TZS {{ formatNum(loan.loan_amount) }}</td>
                   <td>TZS {{ formatNum(loan.outstanding_balance) }}</td>
@@ -138,14 +138,14 @@ import { AuthService } from '../services/auth.service';
             </table>
           </div>
 
-          <div *ngIf="!borrower.loans?.length" class="empty-state">
+          <div *ngIf="!b.loans?.length" class="empty-state">
             <div class="empty-icon">💳</div>
             <p>No loans yet. <a routerLink="/portal/apply-loan">Apply for your first loan</a>.</p>
           </div>
         </div>
 
         <!-- Repayment History -->
-        <div class="card" style="margin-top:1.25rem" *ngIf="borrower.repayments?.length">
+        <div class="card" style="margin-top:1.25rem" *ngIf="b.repayments?.length">
           <h2 class="section-title">Repayment History</h2>
           <div class="table-wrap" style="margin-top:1rem">
             <table class="data-table">
@@ -160,7 +160,7 @@ import { AuthService } from '../services/auth.service';
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let r of borrower.repayments">
+                <tr *ngFor="let r of b.repayments">
                   <td><code style="font-size:0.75rem">{{ r.loan_reference }}</code></td>
                   <td>TZS {{ formatNum(r.repayment_amount) }}</td>
                   <td>{{ r.repayment_date }}</td>
@@ -180,7 +180,7 @@ import { AuthService } from '../services/auth.service';
         </div>
       </ng-container>
 
-      <div *ngIf="!loading && !borrower" class="alert alert-danger">
+      <div *ngIf="!loading() && !borrower()" class="alert alert-danger">
         Could not load your account data. Please try again or contact support.
       </div>
     </div>
@@ -264,8 +264,8 @@ export class BorrowerPortalComponent implements OnInit {
   private api = inject(ApiService);
   private auth = inject(AuthService);
 
-  borrower: Borrower | null = null;
-  loading = true;
+  borrower = signal<Borrower | null>(null);
+  loading = signal(true);
 
   get initials(): string {
     const name = this.auth.userFullName() || '';
@@ -273,13 +273,13 @@ export class BorrowerPortalComponent implements OnInit {
   }
 
   get activeLoans(): number {
-    return this.borrower?.loans?.filter(l => l.status === 'ACTIVE').length ?? 0;
+    return this.borrower()?.loans?.filter(l => l.status === 'ACTIVE').length ?? 0;
   }
 
   ngOnInit(): void {
     this.api.portalMe().subscribe({
-      next: data => { this.borrower = data; this.loading = false; },
-      error: () => { this.loading = false; },
+      next: data => { this.borrower.set(data); this.loading.set(false); },
+      error: () => { this.loading.set(false); },
     });
   }
 

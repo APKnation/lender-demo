@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
@@ -83,16 +83,16 @@ import { AuthService } from '../services/auth.service';
               </div>
             </div>
 
-            <div *ngIf="error" class="alert alert-danger">{{ error }}</div>
+            <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
 
             <button
               id="login-btn"
               type="submit"
               class="btn btn-primary btn-lg submit-btn"
-              [disabled]="!email || !password || loading"
+              [disabled]="!email || !password || loading()"
             >
-              <span *ngIf="loading" class="spinner"></span>
-              <span>{{ loading ? 'Signing in…' : 'Sign In' }}</span>
+              <span *ngIf="loading()" class="spinner"></span>
+              <span>{{ loading() ? 'Signing in…' : 'Sign In' }}</span>
             </button>
           </form>
 
@@ -209,8 +209,8 @@ import { AuthService } from '../services/auth.service';
 export class LoginComponent {
   email = '';
   password = '';
-  loading = false;
-  error = '';
+  loading = signal(false);
+  error = signal('');
   showPassword = false;
 
   private api = inject(ApiService);
@@ -220,8 +220,8 @@ export class LoginComponent {
 
   onSubmit(): void {
     if (!this.email || !this.password) return;
-    this.loading = true;
-    this.error = '';
+    this.loading.set(true);
+    this.error.set('');
 
     this.api.login(this.email, this.password).subscribe({
       next: (tokens) => {
@@ -235,10 +235,10 @@ export class LoginComponent {
         }
       },
       error: (err) => {
-        this.error = err.status === 401
+        this.error.set(err.status === 401
           ? 'Invalid email or password.'
-          : 'Login failed. Please check your connection.';
-        this.loading = false;
+          : 'Login failed. Please check your connection.');
+        this.loading.set(false);
       },
     });
   }

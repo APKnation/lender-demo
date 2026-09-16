@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, Account } from '../services/api.service';
 
@@ -11,16 +11,16 @@ import { ApiService, Account } from '../services/api.service';
       <h1>Accounts</h1>
       <p class="subtitle">All accounts loaded from backend APIs.</p>
 
-      <div class="loading" *ngIf="loading">Loading accounts…</div>
-      <div class="error" *ngIf="error">{{ error }}</div>
+      <div class="loading" *ngIf="loading()">Loading accounts…</div>
+      <div class="error" *ngIf="error()">{{ error() }}</div>
 
-      <table class="data-table" *ngIf="!loading">
+      <table class="data-table" *ngIf="!loading()">
         <thead>
           <tr><th>Reference</th><th>Name</th><th>Type</th><th>Status</th>
               <th>Balance</th><th>Savings</th><th>Currency</th></tr>
         </thead>
         <tbody>
-          <tr *ngFor="let a of accounts">
+          <tr *ngFor="let a of accounts()">
             <td>{{ a.account_reference }}</td>
             <td>{{ a.account_name }}</td>
             <td>{{ a.account_type }}</td>
@@ -31,7 +31,7 @@ import { ApiService, Account } from '../services/api.service';
           </tr>
         </tbody>
       </table>
-      <p *ngIf="!loading && accounts.length === 0" class="no-results">No accounts found.</p>
+      <p *ngIf="!loading() && accounts().length === 0" class="no-results">No accounts found.</p>
     </div>
   `,
   styles: [`
@@ -48,15 +48,15 @@ import { ApiService, Account } from '../services/api.service';
   `]
 })
 export class AccountsComponent implements OnInit {
-  accounts: Account[] = [];
-  loading = true;
-  error = '';
+  accounts = signal<Account[]>([]);
+  loading = signal(true);
+  error = signal('');
   private api = inject(ApiService);
 
   ngOnInit(): void {
     this.api.listAccounts().subscribe({
-      next: (data) => { this.accounts = data; this.loading = false; },
-      error: () => { this.error = 'Failed to load accounts.'; this.loading = false; },
+      next: (data) => { this.accounts.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Failed to load accounts.'); this.loading.set(false); },
     });
   }
 }

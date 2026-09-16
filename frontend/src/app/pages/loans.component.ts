@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, Loan } from '../services/api.service';
 
@@ -11,17 +11,17 @@ import { ApiService, Loan } from '../services/api.service';
       <h1>Loans</h1>
       <p class="subtitle">All loans loaded from backend APIs.</p>
 
-      <div class="loading" *ngIf="loading">Loading loans…</div>
-      <div class="error" *ngIf="error">{{ error }}</div>
+      <div class="loading" *ngIf="loading()">Loading loans…</div>
+      <div class="error" *ngIf="error()">{{ error() }}</div>
 
-      <table class="data-table" *ngIf="!loading">
+      <table class="data-table" *ngIf="!loading()">
         <thead>
           <tr><th>Loan ID</th><th>Account</th><th>Amount</th><th>Date</th>
               <th>Duration</th><th>Rate</th><th>Outstanding</th><th>Status</th><th>Currency</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let l of loans">
+          <tr *ngFor="let l of loans()">
             <td>{{ l.loan_id }}</td>
             <td>{{ l.account_reference }}</td>
             <td>{{ l.loan_amount | number:'1.0-0' }}</td>
@@ -34,7 +34,7 @@ import { ApiService, Loan } from '../services/api.service';
           </tr>
         </tbody>
       </table>
-      <p *ngIf="!loading && loans.length === 0" class="no-results">No loans found.</p>
+      <p *ngIf="!loading() && loans().length === 0" class="no-results">No loans found.</p>
     </div>
   `,
   styles: [`
@@ -48,15 +48,15 @@ import { ApiService, Loan } from '../services/api.service';
     .no-results { color: #999; }
   `]
 })
-export class LoansComponent implements OnInit {  loans: Loan[] = [];
-  loading = true;
-  error = '';
+export class LoansComponent implements OnInit {  loans = signal<Loan[]>([]);
+  loading = signal(true);
+  error = signal('');
   private api = inject(ApiService);
 
   ngOnInit(): void {
     this.api.listLoans().subscribe({
-      next: (data) => { this.loans = data; this.loading = false; },
-      error: () => { this.error = 'Failed to load loans.'; this.loading = false; },
+      next: (data) => { this.loans.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Failed to load loans.'); this.loading.set(false); },
     });
   }
 }

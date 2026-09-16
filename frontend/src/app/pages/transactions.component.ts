@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ApiService, Transaction } from '../services/api.service';
 
@@ -11,17 +11,17 @@ import { ApiService, Transaction } from '../services/api.service';
       <h1>Transactions</h1>
       <p class="subtitle">All transactions loaded from backend APIs.</p>
 
-      <div class="loading" *ngIf="loading">Loading transactions…</div>
-      <div class="error" *ngIf="error">{{ error }}</div>
+      <div class="loading" *ngIf="loading()">Loading transactions…</div>
+      <div class="error" *ngIf="error()">{{ error() }}</div>
 
-      <table class="data-table" *ngIf="!loading">
+      <table class="data-table" *ngIf="!loading()">
         <thead>
           <tr><th>Transaction ID</th><th>Date</th><th>Type</th><th>Direction</th>
               <th>Amount</th><th>Balance After</th><th>Currency</th><th>Status</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let t of transactions">
+          <tr *ngFor="let t of transactions()">
             <td>{{ t.transaction_id }}</td>
             <td>{{ t.transaction_date | date:'short' }}</td>
             <td>{{ t.type }}</td>
@@ -33,7 +33,7 @@ import { ApiService, Transaction } from '../services/api.service';
           </tr>
         </tbody>
       </table>
-      <p *ngIf="!loading && transactions.length === 0" class="no-results">No transactions found.</p>
+      <p *ngIf="!loading() && transactions().length === 0" class="no-results">No transactions found.</p>
     </div>
   `,
   styles: [`
@@ -48,15 +48,15 @@ import { ApiService, Transaction } from '../services/api.service';
   `]
 })
 export class TransactionsComponent implements OnInit {
-  transactions: Transaction[] = [];
-  loading = true;
-  error = '';
+  transactions = signal<Transaction[]>([]);
+  loading = signal(true);
+  error = signal('');
   private api = inject(ApiService);
 
   ngOnInit(): void {
     this.api.listTransactions().subscribe({
-      next: (data) => { this.transactions = data; this.loading = false; },
-      error: () => { this.error = 'Failed to load transactions.'; this.loading = false; },
+      next: (data) => { this.transactions.set(data); this.loading.set(false); },
+      error: () => { this.error.set('Failed to load transactions.'); this.loading.set(false); },
     });
   }
 }
