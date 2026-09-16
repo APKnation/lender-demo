@@ -158,3 +158,4 @@ class Role(models.TextChoices):
     AUDITOR = "AUDITOR", "Auditor"
     READ_ONLY = "READ_ONLY", "Read-only User"
     CENTRAL_SYSTEM = "CENTRAL_SYSTEM", "DAIRE Central System"
+    BORROWER = "BORROWER", "Borrower (Self-Service Portal)"

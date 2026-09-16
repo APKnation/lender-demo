@@ -5,11 +5,11 @@ Override DATABASE_URL via the TEST_DATABASE_URL env var if needed.
 """
 from lender.settings import *  # noqa: F401,F403
 
-# Use a separate test database
+# Use a separate test database (falls back to DATABASE_URL from .env on port 5433)
 DATABASES = {
     "default": env.db_url(
         "TEST_DATABASE_URL",
-        default="postgres://lender_user:lender_password@localhost:5432/lender_db",
+        default=env("DATABASE_URL", default="postgres://postgres:Kafuka2004!@localhost:5433/lender_db"),
     )
 }
 

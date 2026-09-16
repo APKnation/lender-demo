@@ -51,7 +51,7 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
                 key_hash=key_hash, is_active=True
             )
         except IntegrationCredential.DoesNotExist:
-            raise exceptions.AuthenticationFailed("Invalid or unknown API key.")
+            return None  # Let JWTAuthentication handle it if not an API key
 
         if credential.expires_at and credential.expires_at < timezone.now():
             raise exceptions.AuthenticationFailed("API key has expired.")

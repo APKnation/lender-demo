@@ -1,29 +1,41 @@
 import { Routes } from '@angular/router';
-import { DashboardComponent } from './pages/dashboard.component';
-import { BorrowersComponent } from './pages/borrowers.component';
-import { BorrowerDetailComponent } from './pages/borrower-detail.component';
-import { AccountsComponent } from './pages/accounts.component';
-import { TransactionsComponent } from './pages/transactions.component';
-import { LoansComponent } from './pages/loans.component';
-import { RepaymentsComponent } from './pages/repayments.component';
-import { PullHistoryComponent } from './pages/pull-history.component';
-import { CreditResultsComponent } from './pages/credit-results.component';
-import { AuditLogsComponent } from './pages/audit-logs.component';
-import { IntegrationSettingsComponent } from './pages/integration-settings.component';
-import { LoginComponent } from './pages/login.component';
+import { authGuard, adminGuard, borrowerGuard } from './guards/auth.guard';
+
+// Lazy-load all pages
+const Dashboard = () => import('./pages/dashboard.component').then(m => m.DashboardComponent);
+const Borrowers = () => import('./pages/borrowers.component').then(m => m.BorrowersComponent);
+const BorrowerDetail = () => import('./pages/borrower-detail.component').then(m => m.BorrowerDetailComponent);
+const Accounts = () => import('./pages/accounts.component').then(m => m.AccountsComponent);
+const Transactions = () => import('./pages/transactions.component').then(m => m.TransactionsComponent);
+const Loans = () => import('./pages/loans.component').then(m => m.LoansComponent);
+const Repayments = () => import('./pages/repayments.component').then(m => m.RepaymentsComponent);
+const PullHistory = () => import('./pages/pull-history.component').then(m => m.PullHistoryComponent);
+const CreditResults = () => import('./pages/credit-results.component').then(m => m.CreditResultsComponent);
+const AuditLogs = () => import('./pages/audit-logs.component').then(m => m.AuditLogsComponent);
+const IntegrationSettings = () => import('./pages/integration-settings.component').then(m => m.IntegrationSettingsComponent);
+const Login = () => import('./pages/login.component').then(m => m.LoginComponent);
+const BorrowerPortal = () => import('./pages/borrower-portal.component').then(m => m.BorrowerPortalComponent);
+const BorrowerApplyLoan = () => import('./pages/borrower-apply-loan.component').then(m => m.BorrowerApplyLoanComponent);
 
 export const routes: Routes = [
-  { path: 'login', component: LoginComponent },
-  { path: '', component: DashboardComponent },
-  { path: 'borrowers', component: BorrowersComponent },
-  { path: 'borrowers/:reference', component: BorrowerDetailComponent },
-  { path: 'accounts', component: AccountsComponent },
-  { path: 'transactions', component: TransactionsComponent },
-  { path: 'loans', component: LoansComponent },
-  { path: 'repayments', component: RepaymentsComponent },
-  { path: 'pull-history', component: PullHistoryComponent },
-  { path: 'credit-results', component: CreditResultsComponent },
-  { path: 'audit-logs', component: AuditLogsComponent },
-  { path: 'integration-settings', component: IntegrationSettingsComponent },
+  { path: 'login', loadComponent: Login },
+
+  // Staff / Admin routes
+  { path: '', loadComponent: Dashboard, canActivate: [adminGuard] },
+  { path: 'borrowers', loadComponent: Borrowers, canActivate: [adminGuard] },
+  { path: 'borrowers/:reference', loadComponent: BorrowerDetail, canActivate: [adminGuard] },
+  { path: 'accounts', loadComponent: Accounts, canActivate: [adminGuard] },
+  { path: 'transactions', loadComponent: Transactions, canActivate: [adminGuard] },
+  { path: 'loans', loadComponent: Loans, canActivate: [adminGuard] },
+  { path: 'repayments', loadComponent: Repayments, canActivate: [adminGuard] },
+  { path: 'pull-history', loadComponent: PullHistory, canActivate: [adminGuard] },
+  { path: 'credit-results', loadComponent: CreditResults, canActivate: [adminGuard] },
+  { path: 'audit-logs', loadComponent: AuditLogs, canActivate: [adminGuard] },
+  { path: 'integration-settings', loadComponent: IntegrationSettings, canActivate: [adminGuard] },
+
+  // Borrower portal routes
+  { path: 'portal', loadComponent: BorrowerPortal, canActivate: [borrowerGuard] },
+  { path: 'portal/apply-loan', loadComponent: BorrowerApplyLoan, canActivate: [borrowerGuard] },
+
   { path: '**', redirectTo: '' },
 ];

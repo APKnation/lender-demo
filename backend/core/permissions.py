@@ -67,3 +67,13 @@ class IsAuthenticatedOrKey(permissions.BasePermission):
 
     def has_permission(self, request, view):
         return bool(request.user and request.auth)
+
+
+class IsBorrower(permissions.BasePermission):
+    """Allow access only to users with the BORROWER role who have a linked Borrower record."""
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated:
+            return False
+        return getattr(user, "role", None) == "BORROWER" and user.borrower is not None

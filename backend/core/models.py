@@ -649,12 +649,22 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     Custom user model with role-based access control.
 
-    Roles: ADMIN, DATA_OFFICER, AUDITOR, READ_ONLY
+    Roles: ADMIN, DATA_OFFICER, AUDITOR, READ_ONLY, BORROWER
+    For BORROWER role, the `borrower` FK links to the user's Borrower record.
     """
 
     email = models.EmailField(unique=True, max_length=255)
     full_name = models.CharField(max_length=255, blank=True)
     role = models.CharField(max_length=30, choices=Role.choices, default=Role.READ_ONLY)
+    # For BORROWER-role users: link to their Borrower record
+    borrower = models.OneToOneField(
+        "Borrower",
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name="portal_user",
+        help_text="Linked borrower record (for self-service portal users only)",
+    )
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(auto_now_add=True)

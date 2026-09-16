@@ -2,21 +2,28 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+// ── Interfaces ──────────────────────────────────────────────────────────────
+
 export interface Borrower {
   borrower_reference: string;
   customer_id: string;
   full_name: string;
   age: number;
   gender: string;
-  is_active: boolean;
+  is_active?: boolean;
   employment_status: string;
   income: number;
   currency: string;
   business_information: any;
-  account_information: any;
+  account_information: {
+    total_accounts: number;
+    total_balance: number;
+    currency: string;
+    active_accounts: number;
+  };
   accounts: Account[];
   transactions: Transaction[];
-  balance_history: any[];
+  balance_history: BalanceHistory[];
   loans: Loan[];
   repayments: Repayment[];
 }
@@ -75,6 +82,12 @@ export interface Repayment {
   currency: string;
 }
 
+export interface BalanceHistory {
+  account_reference: string;
+  recorded_at: string;
+  balance: number;
+}
+
 export interface CreditResult {
   borrower_reference: string;
   result_type: string;
@@ -121,96 +134,104 @@ export interface PullResponse {
   data: Borrower;
 }
 
-@Injectable({
-  providedIn: 'root',
-})
+export interface LoanApplicationPayload {
+  amount: number;
+  duration_months: number;
+  purpose?: string;
+}
+
+export interface LoanApplicationResponse {
+  loan_id: string;
+  status: string;
+  amount: string;
+  currency: string;
+  duration_months: number;
+  message: string;
+}
+
+// ── Service ──────────────────────────────────────────────────────────────────
+
+@Injectable({ providedIn: 'root' })
 export class ApiService {
-  private readonly baseUrl = '/api';
+  private readonly base = '/api';
 
   constructor(private http: HttpClient) {}
 
-  // --- Auth ---
-  login(username: string, password: string): Observable<{ access: string; refresh: string }> {
+  // Auth
+  login(email: string, password: string): Observable<{ access: string; refresh: string }> {
     return this.http.post<{ access: string; refresh: string }>(
-      `${this.baseUrl}/auth/token/`, { username, password }
+      `${this.base}/auth/token/`, { email, password }
     );
   }
 
-  // --- Health ---
+  // Health
   health(): Observable<{ status: string; database: string }> {
     return this.http.get<{ status: string; database: string }>('/health/');
   }
 
-  // --- Borrower (single lookup) ---
+  // Borrowers
+  listBorrowers(): Observable<Borrower[]> {
+    return this.http.get<Borrower[]>(`${this.base}/borrowers/list/`);
+  }
+
   getBorrower(reference: string): Observable<Borrower> {
     return this.http.get<Borrower>(
-      `${this.baseUrl}/borrowers/?borrower_reference=${encodeURIComponent(reference)}`
+      `${this.base}/borrowers/?borrower_reference=${encodeURIComponent(reference)}`
     );
   }
 
-  // --- Borrower list ---
-  listBorrowers(): Observable<Borrower[]> {
-    return this.http.get<Borrower[]>(`${this.baseUrl}/borrowers/list/`);
+  // Audit Logs
+  getAuditLogs(params: Record<string, string> = {}): Observable<AuditLog[]> {
+    const query = new URLSearchParams(params).toString();
+    const url = query ? `${this.base}/audit/logs/?${query}` : `${this.base}/audit/logs/`;
+    return this.http.get<AuditLog[]>(url);
   }
 
-  // --- Account list ---
-  listAccounts(): Observable<Account[]> {
-    return this.http.get<Account[]>(`${this.baseUrl}/accounts/`);
-  }
-
-  // --- Transaction list ---
-  listTransactions(): Observable<Transaction[]> {
-    return this.http.get<Transaction[]>(`${this.baseUrl}/transactions/`);
-  }
-
-  // --- Loan list ---
-  listLoans(): Observable<Loan[]> {
-    return this.http.get<Loan[]>(`${this.baseUrl}/loans/`);
-  }
-
-  // --- Repayment list ---
-  listRepayments(): Observable<Repayment[]> {
-    return this.http.get<Repayment[]>(`${this.baseUrl}/repayments/`);
-  }
-
-  // --- Central: Pull ---
-  pullBorrowerData(payload: { borrower_reference: string; request_reference?: string; requested_fields?: string[] }): Observable<PullResponse> {
-    return this.http.post<PullResponse>(`${this.baseUrl}/central/pull-borrower-data/`, payload);
-  }
-
-  // --- Central: Push ---
-  pushCreditResult(payload: any): Observable<any> {
-    return this.http.post(`${this.baseUrl}/central/receive-credit-result/`, payload);
-  }
-
-  // --- Credit Results ---
+  // Credit Results
   getCreditResults(borrowerReference?: string): Observable<CreditResult[]> {
     const params = borrowerReference
       ? `?borrower_reference=${encodeURIComponent(borrowerReference)}`
       : '';
-    return this.http.get<CreditResult[]>(`${this.baseUrl}/audit/credit-results/${params}`);
+    return this.http.get<CreditResult[]>(`${this.base}/audit/credit-results/${params}`);
   }
 
-  // --- Audit Logs ---
-  getAuditLogs(params: Record<string, string> = {}): Observable<AuditLog[]> {
-    const query = new URLSearchParams(params).toString();
-    return this.http.get<AuditLog[]>(`${this.baseUrl}/audit/logs/?${query}`);
-  }
-
-  // --- Integration Credentials ---
+  // Integration Credentials
   getCredentials(): Observable<IntegrationCredential[]> {
-    return this.http.get<IntegrationCredential[]>(`${this.baseUrl}/audit/credentials/`);
+    return this.http.get<IntegrationCredential[]>(`${this.base}/audit/credentials/`);
   }
 
-  createCredential(
-    name: string,
-    role: string,
-    permissions: string[],
-    institution: number,
-    lender_id = '',
-  ): Observable<any> {
-    return this.http.post(`${this.baseUrl}/audit/credentials/`, {
-      name, role, permissions, institution, lender_id,
-    });
+  createCredential(name: string, role: string, permissions: string[], institution: number, lender_id = ''): Observable<any> {
+    return this.http.post(`${this.base}/audit/credentials/`, { name, role, permissions, institution, lender_id });
+  }
+
+  // Loans / Accounts / Transactions
+  listLoans(): Observable<Loan[]> {
+    return this.http.get<Loan[]>(`${this.base}/loans/`);
+  }
+
+  listAccounts(): Observable<Account[]> {
+    return this.http.get<Account[]>(`${this.base}/accounts/`);
+  }
+
+  listTransactions(): Observable<Transaction[]> {
+    return this.http.get<Transaction[]>(`${this.base}/transactions/`);
+  }
+
+  listRepayments(): Observable<Repayment[]> {
+    return this.http.get<Repayment[]>(`${this.base}/repayments/`);
+  }
+
+  // Central
+  pullBorrowerData(payload: { borrower_reference: string; request_reference?: string; requested_fields?: string[] }): Observable<PullResponse> {
+    return this.http.post<PullResponse>(`${this.base}/central/pull-borrower-data/`, payload);
+  }
+
+  // Borrower Portal
+  portalMe(): Observable<Borrower> {
+    return this.http.get<Borrower>(`${this.base}/portal/me/`);
+  }
+
+  portalApplyLoan(payload: LoanApplicationPayload): Observable<LoanApplicationResponse> {
+    return this.http.post<LoanApplicationResponse>(`${this.base}/portal/loan-apply/`, payload);
   }
 }
