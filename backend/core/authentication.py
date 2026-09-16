@@ -2,7 +2,9 @@
 Custom authentication: hashed API-key bearer tokens + JWT support.
 """
 import hashlib
+from datetime import timezone as dt_timezone
 
+from django.utils import timezone
 from rest_framework import authentication, exceptions
 
 from .models import IntegrationCredential
@@ -10,11 +12,12 @@ from .models import IntegrationCredential
 
 class APIKeyAuthentication(authentication.BaseAuthentication):
     """
-    Authenticate requests that carry an *hashed* API key as a bearer token.
+    Authenticate requests that carry a *hashed* API key as a bearer token.
 
     The DAIRE Central System sends ``Authorization: Bearer <api_key>``.
-    The key is hashed (SHA-256) and compared against ``IntegrationCredential.key_hash``
-    using ``secrets.compare_digest`` to prevent timing attacks.
+    The key is hashed (SHA-256) and compared against
+    ``IntegrationCredential.key_hash`` using ``secrets.compare_digest``
+    to prevent timing attacks.
     """
 
     keyword = "Bearer"
@@ -50,15 +53,19 @@ class APIKeyAuthentication(authentication.BaseAuthentication):
         except IntegrationCredential.DoesNotExist:
             raise exceptions.AuthenticationFailed("Invalid or unknown API key.")
 
-        if credential.expires_at and credential.expires_at < request:
+        if credential.expires_at and credential.expires_at < timezone.now():
             raise exceptions.AuthenticationFailed("API key has expired.")
 
-        credential.last_used_at = __import__("django.utils.timezone", fromlist=["now"]).now()
+        credential.last_used_at = timezone.now()
         credential.save(update_fields=["last_used_at"])
 
         return (credential, token)
+
+    def authenticate_header(self, request):
+        return self.keyword
 
 
 class AnonymousUserFallback:
     """Used to distinguish 'no token' from 'invalid token' in views."""
     pass
+

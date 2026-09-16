@@ -20,7 +20,9 @@ class HealthCheckView(views.APIView):
     def get(self, request, *args, **kwargs):
         db_status = "connected"
         try:
-            connection.check()
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
         except Exception:
             db_status = "disconnected"
 
