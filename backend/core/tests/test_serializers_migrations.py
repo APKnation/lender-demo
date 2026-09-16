@@ -9,6 +9,7 @@ from io import BytesIO
 
 from django.core.management import call_command
 from django.test import TestCase
+from rest_framework import status
 
 from core.constants import (
     AccountStatus,
