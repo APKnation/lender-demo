@@ -17,8 +17,7 @@ from .models import (
 
 def _get_request():
     """Best-effort retrieval of the current request object."""
-    from .middleware import get_current_request
-
+    from lender.middleware import get_current_request
     return get_current_request()
 
 
