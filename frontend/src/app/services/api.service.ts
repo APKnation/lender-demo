@@ -201,4 +201,16 @@ export class ApiService {
   getCredentials(): Observable<IntegrationCredential[]> {
     return this.http.get<IntegrationCredential[]>(`${this.baseUrl}/audit/credentials/`);
   }
+
+  createCredential(
+    name: string,
+    role: string,
+    permissions: string[],
+    institution: number,
+    lender_id = '',
+  ): Observable<any> {
+    return this.http.post(`${this.baseUrl}/audit/credentials/`, {
+      name, role, permissions, institution, lender_id,
+    });
+  }
 }

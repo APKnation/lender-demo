@@ -478,6 +478,11 @@ class IntegrationCredential(models.Model):
     def __str__(self):
         return f"{self.name} ({self.key_prefix}…)"
 
+    @property
+    def is_authenticated(self):
+        """Django auth compatibility – API key credentials are authenticated."""
+        return True
+
     @classmethod
     def create_key(cls, name, role, institution, permissions=None, **extra):
         """Create a credential and return the *plaintext* key (once)."""

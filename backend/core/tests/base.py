@@ -1,9 +1,8 @@
 """
 Test configuration and base test case.
 
-Uses PostgreSQL via Django's built-in TransactionTestCase to ensure
-migrations are validated.  All tests run against a real PostgreSQL
-database (never SQLite).
+Uses Django's TestCase for transactional test isolation (fast).
+Migration tests use TransactionTestCase separately.
 """
 import hashlib
 import json
@@ -15,7 +14,7 @@ from unittest.mock import patch
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
-from django.test import TransactionTestCase
+from django.test import TestCase
 
 from core.constants import (
     AccountStatus,
@@ -55,15 +54,11 @@ from core.models import (
 User = get_user_model()
 
 
-class LenderTestCase(TransactionTestCase):
+class LenderTestCase(TestCase):
     """
-    Base test case that:
-      * runs migrations from scratch (not --keepdb) to validate them,
-      * seeds a known institution and borrowers,
-      * provides helper methods for API-key and JWT auth.
+     Base test case using Django's TestCase (transactional rollback).
     """
 
-    reset_sequences = True
     serialized_rollback = True
 
     @classmethod
