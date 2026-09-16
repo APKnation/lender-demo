@@ -143,18 +143,6 @@ class BorrowerAdmin(admin.ModelAdmin):
 
 
 # ------------------------------------------------------------------ #
-#  Business Information (inline on Borrower)
-# ------------------------------------------------------------------ #
-class BusinessInformationInline(admin.StackedInline):
-    model = BusinessInformation
-    extra = 0
-    can_delete = False
-
-    def has_add_permission(self, request, obj=None):
-        return False
-
-
-# ------------------------------------------------------------------ #
 #  Account
 # ------------------------------------------------------------------ #
 class AccountBalanceHistoryInline(admin.TabularInline):
