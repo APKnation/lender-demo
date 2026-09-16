@@ -90,14 +90,22 @@ if not DEBUG and "sqlite" in DATABASES["default"]["ENGINE"].lower():
 # --------------------------------------------------------------------------- #
 # Cache
 # --------------------------------------------------------------------------- #
-REDIS_URL = env("REDIS_URL", default="redis://localhost:6379/1")
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+REDIS_URL = env("REDIS_URL", default="")
+if REDIS_URL:
+    CACHES = {
+        "default": {
+            "BACKEND": "django_redis.cache.RedisCache",
+            "LOCATION": REDIS_URL,
+            "OPTIONS": {"CLIENT_CLASS": "django_redis.client.DefaultClient"},
+        }
     }
-}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "lender-cache",
+        }
+    }
 
 # --------------------------------------------------------------------------- #
 # Templates

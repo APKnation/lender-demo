@@ -47,6 +47,18 @@ class InstitutionAdmin(admin.ModelAdmin):
 
 
 # ------------------------------------------------------------------ #
+#  Business Information (inline on Borrower)
+# ------------------------------------------------------------------ #
+class BusinessInformationInline(admin.StackedInline):
+    model = BusinessInformation
+    extra = 0
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+# ------------------------------------------------------------------ #
 #  Borrower
 # ------------------------------------------------------------------ #
 @admin.register(Borrower)
@@ -60,6 +72,7 @@ class BorrowerAdmin(admin.ModelAdmin):
     search_fields = ["borrower_reference", "customer_id", "full_name", "phone", "email"]
     readonly_fields = ["borrower_reference", "created_at", "updated_at", "national_id_hash"]
     actions = ["deactivate_borrowers", "activate_borrowers"]
+    inlines = [BusinessInformationInline]
 
     # Disable delete for borrowers with financial history
     def has_delete_permission(self, request, obj=None):
@@ -130,13 +143,15 @@ class BorrowerAdmin(admin.ModelAdmin):
 
 
 # ------------------------------------------------------------------ #
-#  Customer Profile
+#  Business Information (inline on Borrower)
 # ------------------------------------------------------------------ #
-@admin.register(BusinessInformation)
 class BusinessInformationInline(admin.StackedInline):
     model = BusinessInformation
     extra = 0
     can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
 
 
 # ------------------------------------------------------------------ #
