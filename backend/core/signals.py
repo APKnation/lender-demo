@@ -32,19 +32,19 @@ def borrower_pre_save(sender, instance, **kwargs):
         from .models import hash_sensitive
         instance.national_id_hash = hash_sensitive(raw_nid)
 
-        if not instance.borrower_reference:
-            prefix = getattr(settings, "BORROWER_REF_PREFIX", "BRW-TZ")
-            last = Borrower.objects.filter(
-                borrower_reference__startswith=f"{prefix}-"
-            ).order_by("borrower_reference").last()
-            if last:
-                try:
-                    num = int(last.borrower_reference.split("-")[-1]) + 1
-                except (ValueError, IndexError):
-                    num = 1001
-            else:
+    if not instance.borrower_reference:
+        prefix = getattr(settings, "BORROWER_REF_PREFIX", "BRW-TZ")
+        last = Borrower.objects.filter(
+            borrower_reference__startswith=f"{prefix}-"
+        ).order_by("borrower_reference").last()
+        if last:
+            try:
+                num = int(last.borrower_reference.split("-")[-1]) + 1
+            except (ValueError, IndexError):
                 num = 1001
-            instance.borrower_reference = f"{prefix}-{num:04d}"
+        else:
+            num = 1001
+        instance.borrower_reference = f"{prefix}-{num:04d}"
 
 
 @receiver(post_save, sender=Borrower)
