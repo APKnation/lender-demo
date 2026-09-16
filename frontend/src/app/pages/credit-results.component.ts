@@ -7,42 +7,37 @@ import { ApiService, CreditResult } from '../services/api.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="page">
-      <h1>Credit Results</h1>
-      <p class="subtitle">Credit score results received from the DAIRE Central System.</p>
+    <div class="p-8">
+      <h1 class="text-2xl mb-1">Credit Results</h1>
+      <p class="text-ink-soft mb-6">Credit score results received from the DAIRE Central System.</p>
 
-      <div class="loading" *ngIf="loading()">Loading credit results…</div>
-      <table class="data-table" *ngIf="!loading()">
-        <thead>
-          <tr><th>Time</th><th>Borrower</th><th>Score</th><th>Reputation</th>
-              <th>Risk</th><th>Ruleset</th><th>Model</th><th>Hash</th></tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let r of results()">
-            <td>{{ r.received_at | date:'short' }}</td>
-            <td>{{ r.borrower_reference }}</td>
-            <td>{{ r.credit_score }}</td>
-            <td>{{ r.reputation }}</td>
-            <td>{{ r.risk_level }}</td>
-            <td>{{ r.ruleset_version }}</td>
-            <td>{{ r.model_version }}</td>
-            <td>{{ r.transaction_hash }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p *ngIf="!loading() && results().length === 0" class="no-results">No credit results found.</p>
+      <div class="py-8 text-center text-ink-soft" *ngIf="loading()">Loading credit results…</div>
+
+      <div class="table-wrap" *ngIf="!loading()">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Time</th><th>Borrower</th><th>Score</th><th>Reputation</th>
+              <th>Risk</th><th>Ruleset</th><th>Model</th><th>Hash</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of results()">
+              <td>{{ r.received_at | date:'short' }}</td>
+              <td><code class="text-xs bg-surface-3 px-1.5 py-0.5 rounded font-mono">{{ r.borrower_reference }}</code></td>
+              <td class="font-bold">{{ r.credit_score ?? 'N/A' }}</td>
+              <td>{{ r.reputation }}</td>
+              <td><span class="badge" [class]="riskBadge(r.risk_level)">{{ r.risk_level || '–' }}</span></td>
+              <td>{{ r.ruleset_version }}</td>
+              <td>{{ r.model_version }}</td>
+              <td class="font-mono text-xs">{{ r.transaction_hash }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="!loading() && results().length === 0" class="empty-state">No credit results found.</p>
     </div>
   `,
-  styles: [`
-    .page { padding: 2rem; }
-    .subtitle { color: #666; }
-    .data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.85rem; }
-    .data-table th, .data-table td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #eee; }
-    .data-table th { background: #f8f9fa; }
-    .data-table td { font-family: monospace; font-size: 0.8rem; }
-    .loading { color: #666; padding: 2rem; }
-    .no-results { color: #999; padding: 1rem; text-align: center; }
-  `]
 })
 export class CreditResultsComponent implements OnInit {
   results = signal<CreditResult[]>([]);
@@ -54,5 +49,10 @@ export class CreditResultsComponent implements OnInit {
       next: (data) => { this.results.set(data); this.loading.set(false); },
       error: () => { this.loading.set(false); },
     });
+  }
+
+  riskBadge(risk: string): string {
+    const m: Record<string, string> = { LOW: 'badge-success', MEDIUM: 'badge-warning', HIGH: 'badge-danger' };
+    return m[risk] ?? 'badge-neutral';
   }
 }

@@ -15,19 +15,24 @@ import { AuthService } from './services/auth.service';
 
     <!-- Borrower Portal Layout -->
     <ng-container *ngIf="auth.isLoggedIn() && auth.isBorrower()">
-      <div class="portal-shell">
-        <header class="portal-header">
-          <div class="portal-brand"><strong>NMB</strong> Borrower Portal</div>
-          <nav class="portal-nav">
-            <a routerLink="/portal" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">My Account</a>
-            <a routerLink="/portal/apply-loan" routerLinkActive="active">Apply for Loan</a>
+      <div class="flex flex-col min-h-screen">
+        <header class="sticky top-0 z-100 flex items-center gap-6 h-[60px] px-4 sm:px-8 bg-sidebar text-white">
+          <div class="text-sm whitespace-nowrap"><strong class="text-blue-400">NMB</strong> Borrower Portal</div>
+          <nav class="flex gap-1 flex-1">
+            <a routerLink="/portal" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}"
+               class="px-3.5 py-1.5 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/10 transition no-underline"
+               >My Account</a>
+            <a routerLink="/portal/apply-loan" routerLinkActive="active"
+               class="px-3.5 py-1.5 rounded-md text-sm text-white/70 hover:text-white hover:bg-white/10 transition no-underline"
+               >Apply for Loan</a>
           </nav>
-          <div class="portal-user">
+          <div class="hidden sm:flex items-center gap-3 text-[0.82rem] text-white/70">
             <span>{{ auth.userFullName() || auth.userEmail() }}</span>
             <button class="btn btn-ghost btn-sm" (click)="auth.logout()">Sign Out</button>
           </div>
+          <button class="sm:hidden btn btn-ghost btn-sm" (click)="auth.logout()">Exit</button>
         </header>
-        <main class="portal-main">
+        <main class="flex-1 p-4 sm:p-8 max-w-[1200px] mx-auto w-full">
           <router-outlet />
         </main>
       </div>
@@ -35,332 +40,132 @@ import { AuthService } from './services/auth.service';
 
     <!-- Admin / Staff Layout with Sidebar -->
     <ng-container *ngIf="auth.isLoggedIn() && auth.isStaff()">
-      <div class="admin-shell">
+      <div class="flex min-h-screen">
+        <!-- Mobile backdrop -->
+        <div
+          class="fixed inset-0 bg-black/50 z-150 lg:hidden"
+          [class.opacity-100]="mobileOpen()"
+          [class.opacity-0]="!mobileOpen()"
+          [class.pointer-events-none]="!mobileOpen()"
+          (click)="closeMobile()"
+        ></div>
+
         <!-- Sidebar -->
-        <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
-          <div class="sidebar-header">
-            <div class="sidebar-logo">
-              <span class="logo-icon">N</span>
-              <span class="logo-text">NMB DAIRE</span>
+        <aside
+          class="fixed inset-y-0 left-0 z-200 flex flex-col bg-sidebar overflow-hidden transition-all duration-300 lg:translate-x-0"
+          [style.width]="'var(--app-sidebar-width, 260px)'"
+          [class.-translate-x-full]="!mobileOpen()"
+          [class.translate-x-0]="mobileOpen()"
+        >
+          <div class="flex items-center justify-between h-[60px] px-4 border-b border-white/10 shrink-0">
+            <div class="flex items-center gap-2.5">
+              <span class="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-lg">N</span>
+              <span class="text-white font-bold text-sm">NMB DAIRE</span>
             </div>
-            <button class="collapse-btn" (click)="toggleSidebar()">≡</button>
+            <button class="topbar-btn text-white/50 hover:text-white text-lg lg:hidden" (click)="closeMobile()" aria-label="Close menu">✕</button>
           </div>
 
-          <div class="sidebar-user">
-            <div class="user-avatar">{{ initials() }}</div>
-            <div class="user-info">
-              <div class="user-name">{{ auth.userFullName() || 'Staff' }}</div>
-              <div class="user-role">{{ formatRole(auth.userRole()) }}</div>
+          <div class="flex items-center gap-3 px-5 py-4 border-b border-white/10 shrink-0">
+            <div class="w-9 h-9 shrink-0 rounded-full bg-linear-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-white font-bold text-[0.8rem]">
+              {{ initials() }}
+            </div>
+            <div class="min-w-0">
+              <div class="text-white font-semibold text-[0.85rem] truncate">{{ auth.userFullName() || 'Staff' }}</div>
+              <div class="text-white/45 text-[0.72rem]">{{ formatRole(auth.userRole()) }}</div>
             </div>
           </div>
 
-          <nav class="sidebar-nav">
-            <div class="nav-section">
-              <span class="nav-section-label">Overview</span>
-              <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-item">
-                <span class="nav-icon">Ov</span><span class="nav-label">Dashboard</span>
+          <nav class="flex-1 overflow-y-auto py-3">
+            <div class="mb-2">
+              <span class="nav-section">Overview</span>
+              <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Ov</span><span>Dashboard</span>
               </a>
             </div>
 
-            <div class="nav-section">
-              <span class="nav-section-label">Borrowers</span>
-              <a routerLink="/borrowers" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Br</span><span class="nav-label">All Borrowers</span>
+            <div class="mb-2">
+              <span class="nav-section">Borrowers</span>
+              <a routerLink="/borrowers" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Br</span><span>All Borrowers</span>
               </a>
-              <a routerLink="/accounts" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Ac</span><span class="nav-label">Accounts</span>
+              <a routerLink="/accounts" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Ac</span><span>Accounts</span>
               </a>
-              <a routerLink="/loans" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Ln</span><span class="nav-label">Loans</span>
+              <a routerLink="/loans" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Ln</span><span>Loans</span>
               </a>
-              <a routerLink="/loan-approvals" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Ap</span><span class="nav-label">Loan Approvals</span>
+              <a routerLink="/loan-approvals" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Ap</span><span>Loan Approvals</span>
               </a>
-              <a routerLink="/transactions" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Tx</span><span class="nav-label">Transactions</span>
+              <a routerLink="/transactions" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Tx</span><span>Transactions</span>
               </a>
-              <a routerLink="/repayments" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Rp</span><span class="nav-label">Repayments</span>
-              </a>
-            </div>
-
-            <div class="nav-section">
-              <span class="nav-section-label">Credit & DAIRE</span>
-              <a routerLink="/credit-results" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Cr</span><span class="nav-label">Credit Results</span>
-              </a>
-              <a routerLink="/daire" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">DC</span><span class="nav-label">DAIRE Central</span>
+              <a routerLink="/repayments" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Rp</span><span>Repayments</span>
               </a>
             </div>
 
-            <div class="nav-section" *ngIf="auth.isAdmin()">
-              <span class="nav-section-label">Administration</span>
-              <a routerLink="/integration-settings" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">Ak</span><span class="nav-label">API Keys</span>
+            <div class="mb-2">
+              <span class="nav-section">Credit &amp; DAIRE</span>
+              <a routerLink="/credit-results" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Cr</span><span>Credit Results</span>
+              </a>
+              <a routerLink="/daire" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">DC</span><span>DAIRE Central</span>
+              </a>
+            </div>
+
+            <div class="mb-2" *ngIf="auth.isAdmin()">
+              <span class="nav-section">Administration</span>
+              <a routerLink="/integration-settings" routerLinkActive="active" (click)="closeMobile()" class="nav-item mx-3">
+                <span class="nav-ico">Ak</span><span>API Keys</span>
               </a>
             </div>
           </nav>
 
-          <div class="sidebar-footer">
-            <button class="nav-item logout-btn" (click)="auth.logout()">
-              <span class="nav-icon">So</span><span class="nav-label">Sign Out</span>
+          <div class="border-t border-white/10 py-2">
+            <button class="nav-item w-full bg-transparent border-0 cursor-pointer font-sans hover:bg-red-500/10 hover:text-red-400" (click)="auth.logout()">
+              <span class="nav-ico">So</span><span>Sign Out</span>
             </button>
           </div>
         </aside>
 
         <!-- Main Content -->
-        <div class="admin-content">
-          <header class="admin-header">
-            <div class="header-left">
-              <button class="collapse-btn-mobile" (click)="toggleSidebar()">≡</button>
-              <h1 class="page-title">{{ pageTitle() }}</h1>
+        <div class="flex-1 flex flex-col min-h-screen lg:ml-[var(--app-sidebar-width,260px)]">
+          <header class="sticky top-0 z-100 h-[60px] bg-surface border-b border-line flex items-center justify-between px-4 sm:px-8">
+            <div class="flex items-center gap-4">
+              <button class="lg:hidden topbar-btn text-xl" (click)="openMobile()" aria-label="Open menu">≡</button>
+              <h1 class="text-base font-semibold text-ink">{{ pageTitle() }}</h1>
             </div>
-            <div class="header-right">
-              <span class="header-user">
-                <span class="avatar-sm">{{ initials() }}</span>
-                <span>{{ auth.userEmail() }}</span>
-              </span>
+            <div class="flex items-center gap-2.5 text-[0.82rem] text-ink-soft">
+              <span class="w-[30px] h-[30px] rounded-full bg-linear-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-white font-bold text-[0.7rem]">{{ initials() }}</span>
+              <span class="hidden sm:inline">{{ auth.userEmail() }}</span>
             </div>
           </header>
 
-          <main class="admin-main">
+          <main class="flex-1 p-4 sm:p-8 overflow-y-auto">
             <router-outlet />
+            <footer class="pt-10 pb-4 text-center text-xs text-muted">
+              NMB DAIRE Lender Subsystem · {{ year }}
+            </footer>
           </main>
         </div>
       </div>
     </ng-container>
   `,
-  styles: [`
-    /* ── Portal Layout ── */
-    .portal-shell { display: flex; flex-direction: column; min-height: 100vh; }
-
-    .portal-header {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      padding: 0 2rem;
-      height: 60px;
-      background: #1e2235;
-      color: #fff;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .portal-brand { font-size: 1rem; color: #fff; white-space: nowrap; }
-    .portal-brand strong { color: #60a5fa; }
-
-    .portal-nav { display: flex; gap: 0.25rem; flex: 1; }
-    .portal-nav a {
-      color: rgba(255,255,255,0.7);
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      transition: all 0.2s;
-      text-decoration: none;
-    }
-    .portal-nav a.active,
-    .portal-nav a:hover { color: #fff; background: rgba(255,255,255,0.1); }
-
-    .portal-user {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.7);
-    }
-    .portal-main { flex: 1; padding: 2rem; max-width: 1200px; margin: 0 auto; width: 100%; }
-
-    /* ── Admin Sidebar ── */
-    .admin-shell { display: flex; min-height: 100vh; }
-
-    .sidebar {
-      width: var(--sidebar-width);
-      background: var(--sidebar-bg);
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      z-index: 200;
-      transition: width 0.25s ease;
-      overflow: hidden;
-    }
-    .sidebar.collapsed { width: 64px; }
-    .sidebar.collapsed .logo-text,
-    .sidebar.collapsed .user-info,
-    .sidebar.collapsed .nav-label,
-    .sidebar.collapsed .nav-section-label,
-    .sidebar.collapsed .sidebar-footer .nav-label { display: none; }
-    .sidebar.collapsed .sidebar-user { padding: 1rem 0; justify-content: center; }
-    .sidebar.collapsed .user-avatar { width: 36px; height: 36px; font-size: 0.8rem; }
-    .sidebar.collapsed .nav-item { justify-content: center; padding: 12px; }
-
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 1rem;
-      height: 60px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      flex-shrink: 0;
-    }
-    .sidebar-logo { display: flex; align-items: center; gap: 0.6rem; }
-    .logo-icon { font-size: 1.4rem; }
-    .logo-text { color: #fff; font-weight: 700; font-size: 1rem; }
-
-    .collapse-btn, .collapse-btn-mobile {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.5);
-      cursor: pointer;
-      font-size: 1.1rem;
-      padding: 4px;
-      border-radius: 4px;
-      transition: color 0.2s;
-    }
-    .collapse-btn:hover { color: #fff; }
-    .collapse-btn-mobile { color: var(--text-secondary); font-size: 1.2rem; }
-
-    .sidebar-user {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      flex-shrink: 0;
-    }
-    .user-avatar {
-      width: 38px; height: 38px;
-      background: linear-gradient(135deg, #1a56db, #0e9f6e);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.85rem;
-      flex-shrink: 0;
-    }
-    .user-name { color: #fff; font-weight: 600; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-role { color: rgba(255,255,255,0.45); font-size: 0.72rem; }
-
-    .sidebar-nav {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0.75rem 0;
-    }
-    .nav-section { margin-bottom: 0.5rem; }
-    .nav-section-label {
-      display: block;
-      padding: 6px 1.25rem 4px;
-      color: rgba(255,255,255,0.3);
-      font-size: 0.68rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 9px 1.25rem;
-      color: var(--sidebar-text);
-      font-size: 0.875rem;
-      cursor: pointer;
-      transition: all 0.15s;
-      border-left: 3px solid transparent;
-      text-decoration: none;
-      background: none;
-      border-top: none;
-      border-right: none;
-      border-bottom: none;
-      width: 100%;
-      text-align: left;
-      font-family: var(--font);
-    }
-    .nav-item:hover { background: var(--sidebar-hover); color: #fff; text-decoration: none; }
-    .nav-item.active {
-      background: rgba(26, 86, 219, 0.25);
-      color: #fff;
-      border-left-color: var(--primary);
-    }
-    .nav-icon { font-size: 1.1rem; flex-shrink: 0; width: 22px; text-align: center; }
-
-    .sidebar-footer {
-      border-top: 1px solid rgba(255,255,255,0.08);
-      padding: 0.5rem 0;
-    }
-    .logout-btn { color: rgba(255,255,255,0.5); }
-    .logout-btn:hover { color: #f87171; background: rgba(239,68,68,0.1); }
-
-    /* ── Admin Content ── */
-    .admin-content {
-      flex: 1;
-      margin-left: var(--sidebar-width);
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      transition: margin-left 0.25s ease;
-    }
-
-    .admin-header {
-      height: 60px;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-    .header-left { display: flex; align-items: center; gap: 1rem; }
-    .page-title { font-size: 1rem; font-weight: 600; color: var(--text-primary); }
-    .collapse-btn-mobile { display: none; }
-
-    .header-right { display: flex; align-items: center; }
-    .header-user {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-    }
-    .avatar-sm {
-      width: 30px; height: 30px;
-      background: linear-gradient(135deg, #1a56db, #0e9f6e);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-weight: 700;
-      font-size: 0.7rem;
-    }
-
-    .admin-main {
-      flex: 1;
-      padding: 2rem;
-      overflow-y: auto;
-    }
-
-    @media (max-width: 900px) {
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.open { transform: none; }
-      .admin-content { margin-left: 0; }
-      .collapse-btn-mobile { display: block; }
-    }
-  `]
 })
 export class App {
   auth = inject(AuthService);
   private router = inject(Router);
-  sidebarCollapsed = signal(false);
+  mobileOpen = signal(false);
+  readonly year = new Date().getFullYear();
 
-  toggleSidebar(): void {
-    this.sidebarCollapsed.update(v => !v);
+  openMobile(): void {
+    this.mobileOpen.set(true);
+  }
+
+  closeMobile(): void {
+    this.mobileOpen.set(false);
   }
 
   initials(): string {
@@ -386,10 +191,10 @@ export class App {
       '/borrowers': 'Borrowers',
       '/accounts': 'Accounts',
       '/loans': 'Loans',
+      '/loan-approvals': 'Loan Approvals',
       '/transactions': 'Transactions',
       '/repayments': 'Repayments',
       '/credit-results': 'Credit Results',
-      '/loan-approvals': 'Loan Approvals',
       '/daire': 'DAIRE Central System',
       '/integration-settings': 'API Keys & Integration',
     };

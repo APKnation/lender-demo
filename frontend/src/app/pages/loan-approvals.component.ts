@@ -1,54 +1,49 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService, Loan } from '../services/api.service';
 
 @Component({
   selector: 'app-loan-approvals',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   template: `
-    <div class="page">
-      <h1>Loan Approvals</h1>
-      <p class="subtitle">Review pending loan applications — approve or disallow according to bank requirements.</p>
+    <div class="p-8">
+      <h1 class="text-2xl mb-1">Loan Approvals</h1>
+      <p class="text-ink-soft mb-6">Review pending loan applications — approve or disallow according to bank requirements.</p>
 
-      <div class="loading" *ngIf="loading()">Loading pending applications…</div>
-      <div class="error" *ngIf="error()">{{ error() }}</div>
+      <div class="py-8 text-center text-ink-soft" *ngIf="loading()">Loading pending applications…</div>
+      <div class="alert alert-danger" *ngIf="error()">{{ error() }}</div>
 
       <ng-container *ngIf="!loading()">
-        <table class="data-table" *ngIf="loans().length > 0">
-          <thead>
-            <tr>
-              <th>Loan ID</th>
-              <th>Borrower</th>
-              <th>Amount</th>
-              <th>Duration</th>
-              <th>Rate</th>
-              <th>Purpose</th>
-              <th>Applied</th>
-              <th>Decision</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let l of loans()">
-              <td><code class="ref">{{ l.loan_id }}</code></td>
-              <td>
-                <a [routerLink]="['/borrowers', l.account_reference ? borrowerRefOf(l) : '']">{{ borrowerName(l) }}</a><br>
-                <small class="text-muted">{{ borrowerRefOf(l) }}</small>
-              </td>
-              <td>{{ formatNum(l.loan_amount) }} {{ l.currency }}</td>
-              <td>{{ l.loan_duration_months }} months</td>
-              <td>{{ l.interest_rate }}%</td>
-              <td>{{ l.purpose || '—' }}</td>
-              <td>{{ l.loan_date | date:'dd MMM yyyy' }}</td>
-              <td class="actions">
-                <button class="btn btn-approve btn-sm" (click)="openReview(l, 'approve')">Approve</button>
-                <button class="btn btn-reject btn-sm" (click)="openReview(l, 'reject')">Reject</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-wrap" *ngIf="loans().length > 0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Loan ID</th><th>Borrower</th><th>Amount</th><th>Duration</th>
+                <th>Rate</th><th>Purpose</th><th>Applied</th><th>Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let l of loans()">
+                <td><code class="text-xs bg-surface-3 px-1.5 py-0.5 rounded font-mono">{{ l.loan_id }}</code></td>
+                <td>
+                  {{ borrowerName(l) }}<br>
+                  <small class="text-muted">{{ borrowerRefOf(l) }}</small>
+                </td>
+                <td>{{ formatNum(l.loan_amount) }} {{ l.currency }}</td>
+                <td>{{ l.loan_duration_months }} months</td>
+                <td>{{ l.interest_rate }}%</td>
+                <td>{{ l.purpose || '—' }}</td>
+                <td>{{ l.loan_date | date:'dd MMM yyyy' }}</td>
+                <td class="flex gap-2">
+                  <button class="btn btn-sm bg-emerald-600 hover:bg-emerald-700 text-white" (click)="openReview(l, 'approve')">Approve</button>
+                  <button class="btn btn-sm bg-red-600 hover:bg-red-700 text-white" (click)="openReview(l, 'reject')">Reject</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
         <div *ngIf="loans().length === 0" class="empty-state">
           <p>No pending loan applications.</p>
@@ -56,10 +51,10 @@ import { ApiService, Loan } from '../services/api.service';
       </ng-container>
 
       <!-- Decision modal -->
-      <div class="modal-backdrop" *ngIf="reviewing()">
-        <div class="modal">
-          <h2>{{ action() === 'approve' ? 'Approve Loan' : 'Reject Loan' }}</h2>
-          <p class="modal-sub">
+      <div class="fixed inset-0 bg-black/45 flex items-center justify-center z-50" *ngIf="reviewing()">
+        <div class="bg-surface rounded-2xl p-7 w-[92%] max-w-[460px] shadow-2xl">
+          <h2 class="text-lg mb-1">{{ action() === 'approve' ? 'Approve Loan' : 'Reject Loan' }}</h2>
+          <p class="text-ink-soft text-sm mb-4">
             <strong>{{ current()?.loan_id }}</strong> —
             TZS {{ formatNum(current()?.loan_amount || 0) }} over
             {{ current()?.loan_duration_months }} months
@@ -67,19 +62,22 @@ import { ApiService, Loan } from '../services/api.service';
 
           <label class="form-label">Decision note {{ action() === 'reject' ? '(reason required)' : '(optional)' }}</label>
           <textarea
+            class="form-control resize-y"
             [(ngModel)]="notes"
             rows="3"
             placeholder="e.g. Meets bank requirements — income verified / Insufficient collateral"
           ></textarea>
 
-          <div class="error" *ngIf="submitError()">{{ submitError() }}</div>
+          <div class="alert alert-danger mt-3" *ngIf="submitError()">{{ submitError() }}</div>
 
-          <div class="modal-actions">
+          <div class="flex justify-end gap-3 mt-5">
             <button class="btn btn-outline" (click)="closeReview()">Cancel</button>
             <button
-              class="btn btn-lg"
-              [class.btn-approve]="action() === 'approve'"
-              [class.btn-reject]="action() === 'reject'"
+              class="btn btn-lg text-white"
+              [class.bg-emerald-600]="action() === 'approve'"
+              [class.hover:bg-emerald-700]="action() === 'approve'"
+              [class.bg-red-600]="action() === 'reject'"
+              [class.hover:bg-red-700]="action() === 'reject'"
               (click)="submitReview()"
               [disabled]="submitting() || (action() === 'reject' && !notes().trim())"
             >
@@ -89,60 +87,17 @@ import { ApiService, Loan } from '../services/api.service';
         </div>
       </div>
 
-      <!-- Result banner -->
-      <div class="toast" *ngIf="resultMessage()" [class.toast-error]="isError()">
+      <!-- Result toast -->
+      <div
+        *ngIf="resultMessage()"
+        class="fixed bottom-6 right-6 px-5 py-3 rounded-lg text-sm text-white shadow-xl z-50"
+        [class.bg-emerald-600]="!isError()"
+        [class.bg-red-600]="isError()"
+      >
         {{ resultMessage() }}
       </div>
     </div>
   `,
-  styles: [`
-    .page { padding: 2rem; }
-    .subtitle { color: var(--text-secondary); margin-bottom: 1.25rem; }
-    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .data-table th, .data-table td { padding: 0.6rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
-    .data-table th { background: var(--surface-3, #f8f9fa); }
-    .ref { font-size: 0.75rem; background: var(--surface-3, #f1f3f5); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-    .actions { display: flex; gap: 0.4rem; }
-    .btn-approve { background: #059669; color: #fff; }
-    .btn-approve:hover { background: #047857; }
-    .btn-reject { background: #dc2626; color: #fff; }
-    .btn-reject:hover { background: #b91c1c; }
-    .loading, .error { padding: 1rem 0; }
-    .error { color: #dc2626; }
-    .empty-state { padding: 3rem; text-align: center; color: var(--text-secondary); }
-
-    .modal-backdrop {
-      position: fixed; inset: 0;
-      background: rgba(0,0,0,0.45);
-      display: flex; align-items: center; justify-content: center;
-      z-index: 1000;
-    }
-    .modal {
-      background: var(--surface, #fff);
-      border-radius: 12px;
-      padding: 1.75rem;
-      width: 92%; max-width: 460px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    .modal h2 { font-size: 1.15rem; margin-bottom: 0.4rem; }
-    .modal-sub { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem; }
-    textarea {
-      width: 100%; border: 1px solid var(--border, #ddd); border-radius: 8px;
-      padding: 0.6rem; font: inherit; resize: vertical;
-    }
-    .form-label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin: 0.75rem 0 0.3rem; }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.1rem; }
-
-    .toast {
-      position: fixed; bottom: 1.5rem; right: 1.5rem;
-      background: #059669; color: #fff;
-      padding: 0.8rem 1.2rem; border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-      font-size: 0.85rem;
-      z-index: 1100;
-    }
-    .toast-error { background: #dc2626; }
-  `]
 })
 export class LoanApprovalsComponent implements OnInit {
   private api = inject(ApiService);

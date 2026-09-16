@@ -8,138 +8,72 @@ import { ApiService, CreditResult } from '../services/api.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page">
-      <h1>DAIRE Central System</h1>
-      <p class="subtitle">
+    <div class="p-8">
+      <h1 class="text-2xl mb-1">DAIRE Central System</h1>
+      <p class="text-ink-soft mb-6 max-w-[640px]">
         Send information to and receive information from the DAIRE Central System.
         Access is restricted to ADMIN users.
       </p>
 
-      <div class="cards">
+      <div class="grid gap-5 grid-cols-1 lg:grid-cols-2">
         <!-- Send / receive request -->
         <div class="card">
-          <h2>Request Borrower Data</h2>
-          <p class="hint">Sends a borrower-data request to the central system and displays the received response.</p>
+          <h2 class="text-base mb-1">Request Borrower Data</h2>
+          <p class="text-ink-soft text-xs mb-4">Sends a borrower-data request to the central system and displays the received response.</p>
 
           <label class="form-label">Borrower Reference</label>
-          <input
-            type="text"
-            [(ngModel)]="borrowerRef"
-            placeholder="e.g. BRW-TZ-1001"
-            class="form-control"
-          />
+          <input type="text" class="form-control" [(ngModel)]="borrowerRef" placeholder="e.g. BRW-TZ-1001" />
 
-          <label class="form-label">Requested Fields <span class="text-muted">(comma-separated, optional)</span></label>
-          <input
-            type="text"
-            [(ngModel)]="fieldsInput"
-            placeholder="e.g. accounts, loans, repayments"
-            class="form-control"
-          />
+          <label class="form-label mt-3">
+            Requested Fields <span class="text-muted">(comma-separated, optional)</span>
+          </label>
+          <input type="text" class="form-control" [(ngModel)]="fieldsInput" placeholder="e.g. accounts, loans, repayments" />
 
-          <button
-            class="btn btn-primary"
-            (click)="requestData()"
-            [disabled]="!borrowerRef().trim() || sending()"
-          >
+          <button class="btn btn-primary mt-4" (click)="requestData()" [disabled]="!borrowerRef().trim() || sending()">
             {{ sending() ? 'Requesting…' : 'Send Request' }}
           </button>
 
-          <div class="error" *ngIf="requestError()">{{ requestError() }}</div>
+          <div class="alert alert-danger mt-4 mb-0" *ngIf="requestError()">{{ requestError() }}</div>
 
-          <div class="response" *ngIf="response()">
-            <h3>Received Response</h3>
-            <pre>{{ responseJson() }}</pre>
+          <div class="mt-5" *ngIf="response()">
+            <h3 class="text-sm text-ink-soft mb-2">Received Response</h3>
+            <pre class="bg-surface-3 border border-line rounded-lg p-3.5 text-xs overflow-auto max-h-[380px] font-mono">{{ responseJson() }}</pre>
           </div>
         </div>
 
         <!-- Received credit results -->
         <div class="card">
-          <h2>Received Credit Results</h2>
-          <p class="hint">Credit results pushed to this subsystem by the DAIRE Central System.</p>
+          <h2 class="text-base mb-1">Received Credit Results</h2>
+          <p class="text-ink-soft text-xs mb-4">Credit results pushed to this subsystem by the DAIRE Central System.</p>
 
-          <div class="loading" *ngIf="loadingResults()">Loading…</div>
+          <div class="py-8 text-center text-ink-soft" *ngIf="loadingResults()">Loading…</div>
 
-          <table class="data-table" *ngIf="!loadingResults() && results().length > 0">
-            <thead>
-              <tr>
-                <th>Borrower</th>
-                <th>Score</th>
-                <th>Reputation</th>
-                <th>Risk</th>
-                <th>Received</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let r of results()">
-                <td><code class="ref">{{ r.borrower_reference }}</code></td>
-                <td class="score">{{ r.credit_score ?? 'N/A' }}</td>
-                <td>{{ r.reputation || '—' }}</td>
-                <td>
-                  <span class="badge" [class.badge-success]="r.risk_level === 'LOW'"
-                        [class.badge-warning]="r.risk_level === 'MEDIUM'"
-                        [class.badge-danger]="r.risk_level === 'HIGH'">
-                    {{ r.risk_level || '—' }}
-                  </span>
-                </td>
-                <td>{{ r.received_at | date:'dd MMM, HH:mm' }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="table-wrap" *ngIf="!loadingResults() && results().length > 0">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Borrower</th><th>Score</th><th>Reputation</th><th>Risk</th><th>Received</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of results()">
+                  <td><code class="text-xs bg-surface-3 px-1.5 py-0.5 rounded font-mono">{{ r.borrower_reference }}</code></td>
+                  <td class="font-bold">{{ r.credit_score ?? 'N/A' }}</td>
+                  <td>{{ r.reputation || '—' }}</td>
+                  <td><span class="badge" [class]="riskBadge(r.risk_level)">{{ r.risk_level || '—' }}</span></td>
+                  <td>{{ r.received_at | date:'dd MMM, HH:mm' }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <div class="empty" *ngIf="!loadingResults() && results().length === 0">
+          <div class="py-8 text-center text-ink-soft" *ngIf="!loadingResults() && results().length === 0">
             No credit results received yet.
           </div>
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    .page { padding: 2rem; }
-    .subtitle { color: var(--text-secondary); margin-bottom: 1.25rem; max-width: 640px; }
-    .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-    .card {
-      background: var(--surface, #fff);
-      border: 1px solid var(--border, #e5e7eb);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-    .card h2 { font-size: 1rem; margin-bottom: 0.3rem; }
-    .hint { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1rem; }
-    .form-label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin: 0.75rem 0 0.3rem; }
-    .form-control {
-      width: 100%; padding: 0.55rem 0.75rem;
-      border: 1px solid var(--border, #ddd); border-radius: 8px;
-      font: inherit;
-    }
-    .btn { margin-top: 1rem; }
-    .error { color: #dc2626; font-size: 0.85rem; margin-top: 0.75rem; }
-
-    .response { margin-top: 1.25rem; }
-    .response h3 { font-size: 0.85rem; margin-bottom: 0.5rem; color: var(--text-secondary); }
-    .response pre {
-      background: var(--surface-3, #f6f8fa);
-      border: 1px solid var(--border, #e5e7eb);
-      border-radius: 8px;
-      padding: 0.9rem;
-      font-size: 0.75rem;
-      overflow: auto;
-      max-height: 380px;
-    }
-
-    .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    .data-table th, .data-table td { padding: 0.5rem 0.6rem; text-align: left; border-bottom: 1px solid var(--border, #eee); }
-    .data-table th { background: var(--surface-3, #f8f9fa); }
-    .ref { font-size: 0.72rem; background: var(--surface-3, #f1f3f5); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-    .score { font-weight: 700; }
-    .badge { padding: 0.15rem 0.55rem; border-radius: 12px; font-size: 0.72rem; }
-    .badge-success { background: #d1fae5; color: #065f46; }
-    .badge-warning { background: #fef3c7; color: #92400e; }
-    .badge-danger { background: #fee2e2; color: #991b1b; }
-    .empty, .loading { padding: 2rem 0; color: var(--text-secondary); text-align: center; }
-
-    @media (max-width: 1000px) { .cards { grid-template-columns: 1fr; } }
-  `]
 })
 export class DaireAdminComponent implements OnInit {
   private api = inject(ApiService);
@@ -166,10 +100,7 @@ export class DaireAdminComponent implements OnInit {
   }
 
   requestData(): void {
-    const fields = this.fieldsInput()
-      .split(',')
-      .map(s => s.trim())
-      .filter(Boolean);
+    const fields = this.fieldsInput().split(',').map(s => s.trim()).filter(Boolean);
 
     this.sending.set(true);
     this.requestError.set('');
@@ -186,5 +117,10 @@ export class DaireAdminComponent implements OnInit {
 
   responseJson(): string {
     return JSON.stringify(this.response(), null, 2);
+  }
+
+  riskBadge(risk: string): string {
+    const m: Record<string, string> = { LOW: 'badge-success', MEDIUM: 'badge-warning', HIGH: 'badge-danger' };
+    return m[risk] ?? 'badge-neutral';
   }
 }

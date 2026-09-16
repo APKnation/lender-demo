@@ -8,117 +8,135 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="dashboard">
+    <div class="space-y-6">
+      <!-- Page intro -->
+      <div class="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-ink">Portfolio Overview</h1>
+          <p class="text-sm text-ink-soft">Borrowers, loans and credit signals from the DAIRE subsystem.</p>
+        </div>
+        <span class="inline-flex items-center gap-2 text-xs text-ink-soft">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Live data
+        </span>
+      </div>
 
       <!-- Loading -->
       <div *ngIf="loading()" class="loading-page">
-        <div class="spinner" style="width:36px;height:36px;border-width:3px"></div>
+        <div class="spinner w-9 h-9"></div>
         <p>Loading dashboard data…</p>
-      </div>
-      <!-- Loan Approvals -->
-      <div class="card section-card approvals-card">
-        <div class="section-header">
-          <h2>Pending Loan Approvals</h2>
-          <a routerLink="/loan-approvals" class="btn btn-outline btn-sm">Review All</a>
-        </div>
-        <div class="credit-list" *ngIf="pendingLoans().length > 0">
-          <div *ngFor="let l of pendingLoans().slice(0, 5)" class="credit-item">
-            <div class="credit-ref">{{ l.loan_id }}</div>
-            <div><strong>TZS {{ formatBalance(l.loan_amount) }}</strong></div>
-            <div class="text-muted" style="font-size:0.75rem">{{ l.loan_duration_months }} months</div>
-            <a routerLink="/loan-approvals" class="btn btn-ghost btn-sm">Review</a>
-          </div>
-        </div>
-        <div *ngIf="pendingLoans().length === 0" class="empty-state">
-          <p>No pending loan applications</p>
-        </div>
       </div>
 
       <ng-container *ngIf="!loading()">
+        <!-- Pending approvals banner -->
+        <div class="card border-l-4 border-l-amber-500">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <div class="flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-bold text-xs flex items-center justify-center">Ap</span>
+              <h2 class="text-base mb-0">Pending Loan Approvals</h2>
+              <span class="badge badge-warning">{{ pendingLoans().length }}</span>
+            </div>
+            <a routerLink="/loan-approvals" class="btn btn-outline btn-sm shrink-0">Review All</a>
+          </div>
+          <div class="flex flex-col gap-2" *ngIf="pendingLoans().length > 0">
+            <div
+              *ngFor="let l of pendingLoans().slice(0, 5)"
+              class="flex flex-col gap-2 rounded-lg border border-line bg-surface-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <code class="text-xs bg-surface-3 px-2 py-1 rounded font-mono w-fit">{{ l.loan_id }}</code>
+              <div class="flex items-center gap-4 text-sm">
+                <strong>TZS {{ formatBalance(l.loan_amount) }}</strong>
+                <span class="text-ink-soft text-xs">{{ l.loan_duration_months }} months</span>
+                <span class="badge badge-neutral">{{ l.purpose || 'No purpose' }}</span>
+              </div>
+              <a routerLink="/loan-approvals" class="btn btn-ghost btn-sm w-fit">Review &rsaquo;</a>
+            </div>
+          </div>
+          <div *ngIf="pendingLoans().length === 0" class="empty-state !py-6">
+            <p>No pending loan applications — all caught up.</p>
+          </div>
+        </div>
+
         <!-- KPI Cards -->
-        <div class="kpi-grid">
-          <div class="kpi-card">
-            <div class="kpi-icon kpi-icon-blue">T</div>
-            <div class="kpi-body">
-              <div class="kpi-value">{{ borrowers().length }}</div>
-              <div class="kpi-label">Total Borrowers</div>
-            </div>
-            <a routerLink="/borrowers" class="kpi-link">View &rsaquo;</a>
+        <div class="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-4">
+          <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-blue-100 transition">
+            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-bold mb-3 shadow-sm">T</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ borrowers().length }}</div>
+            <div class="text-xs text-ink-soft mt-1.5">Total Borrowers</div>
+            <a routerLink="/borrowers" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-icon kpi-icon-green">A</div>
-            <div class="kpi-body">
-              <div class="kpi-value">{{ totalAccounts() }}</div>
-              <div class="kpi-label">Active Accounts</div>
-            </div>
-            <a routerLink="/accounts" class="kpi-link">View &rsaquo;</a>
+          <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-emerald-100 transition">
+            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center font-bold mb-3 shadow-sm">A</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ totalAccounts() }}</div>
+            <div class="text-xs text-ink-soft mt-1.5">Active Accounts</div>
+            <a routerLink="/accounts" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-icon kpi-icon-amber">L</div>
-            <div class="kpi-body">
-              <div class="kpi-value">{{ totalLoans() }}</div>
-              <div class="kpi-label">Active Loans</div>
-            </div>
-            <a routerLink="/loans" class="kpi-link">View &rsaquo;</a>
+          <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-amber-100 transition">
+            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold mb-3 shadow-sm">L</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ totalLoans() }}</div>
+            <div class="text-xs text-ink-soft mt-1.5">Active Loans</div>
+            <a routerLink="/loans" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-icon kpi-icon-violet">P</div>
-            <div class="kpi-body">
-              <div class="kpi-value">{{ formatBalance(totalBalance()) }}</div>
-              <div class="kpi-label">Total Portfolio Balance</div>
-            </div>
+          <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-violet-100 transition">
+            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-violet-500 to-purple-700 text-white flex items-center justify-center font-bold mb-3 shadow-sm">P</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ formatBalance(totalBalance()) }}</div>
+            <div class="text-xs text-ink-soft mt-1.5">Portfolio Balance</div>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-icon kpi-icon-red">R</div>
-            <div class="kpi-body">
-              <div class="kpi-value">{{ highRiskCount() }}</div>
-              <div class="kpi-label">High Risk Borrowers</div>
-            </div>
-            <a routerLink="/credit-results" class="kpi-link">View &rsaquo;</a>
+          <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-rose-100 transition">
+            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-rose-500 to-red-600 text-white flex items-center justify-center font-bold mb-3 shadow-sm">R</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ highRiskCount() }}</div>
+            <div class="text-xs text-ink-soft mt-1.5">High Risk Borrowers</div>
+            <a routerLink="/credit-results" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
-          <div class="kpi-card">
-            <div class="kpi-icon kpi-icon-teal">C</div>
-            <div class="kpi-body">
-              <div class="kpi-value">{{ recentCreditResults().length }}</div>
-              <div class="kpi-label">Credit Results</div>
-            </div>
-            <a routerLink="/credit-results" class="kpi-link">View &rsaquo;</a>
+          <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-teal-100 transition">
+            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center font-bold mb-3 shadow-sm">C</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ recentCreditResults().length }}</div>
+            <div class="text-xs text-ink-soft mt-1.5">Credit Results</div>
+            <a routerLink="/credit-results" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
         </div>
 
         <!-- Main content grid -->
-        <div class="content-grid">
-
+        <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
           <!-- Borrower Summary Table -->
-          <div class="card section-card span-2">
-            <div class="section-header">
-              <h2>Borrower Portfolio</h2>
+          <div class="card lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">Br</span>
+                <h2 class="text-base mb-0">Borrower Portfolio</h2>
+              </div>
               <a routerLink="/borrowers" class="btn btn-outline btn-sm">View All</a>
             </div>
             <div class="table-wrap">
-              <table class="data-table">
+              <table class="data-table min-w-[880px]">
                 <thead>
                   <tr>
-                    <th>Reference</th>
-                    <th>Name</th>
-                    <th>Employment</th>
-                    <th>Income</th>
-                    <th>Accounts</th>
-                    <th>Loans</th>
-                    <th>Balance</th>
-                    <th>Action</th>
+                    <th>Reference</th><th>Name</th><th>Employment</th><th>Income</th>
+                    <th>Accounts</th><th>Loans</th><th>Balance</th><th></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let b of borrowers().slice(0, 8)">
-                    <td><code class="ref">{{ b.borrower_reference }}</code></td>
-                    <td><strong>{{ b.full_name }}</strong><br><small class="text-muted">{{ b.gender }}</small></td>
+                    <td><code class="text-xs bg-surface-3 px-1.5 py-0.5 rounded font-mono">{{ b.borrower_reference }}</code></td>
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-full bg-linear-to-br from-blue-500 to-emerald-500 text-white text-[0.65rem] font-bold flex items-center justify-center shrink-0">
+                          {{ initialsOf(b.full_name) }}
+                        </span>
+                        <div class="leading-tight">
+                          <div class="font-semibold">{{ b.full_name }}</div>
+                          <div class="text-[0.7rem] text-muted">{{ b.gender }}</div>
+                        </div>
+                      </div>
+                    </td>
                     <td>{{ formatEmployment(b.employment_status) }}</td>
-                    <td>{{ formatBalance(+b.income) }}</td>
+                    <td class="font-medium">{{ formatBalance(+b.income) }}</td>
                     <td>{{ b.account_information?.total_accounts || 0 }}</td>
                     <td>{{ b.loans?.length || 0 }}</td>
-                    <td>{{ formatBalance(b.account_information?.total_balance || 0) }}</td>
+                    <td class="font-medium">{{ formatBalance(b.account_information?.total_balance || 0) }}</td>
                     <td><a [routerLink]="['/borrowers', b.borrower_reference]" class="btn btn-ghost btn-sm">Detail</a></td>
+                  </tr>
+                  <tr *ngIf="borrowers().length === 0">
+                    <td colspan="8" class="text-center text-ink-soft py-8">No borrowers found.</td>
                   </tr>
                 </tbody>
               </table>
@@ -126,167 +144,89 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
           </div>
 
           <!-- Credit Results -->
-          <div class="card section-card">
-            <div class="section-header">
-              <h2>Credit Results</h2>
-              <a routerLink="/credit-results" class="btn btn-outline btn-sm">View All</a>
-            </div>
-            <div class="credit-list">
-              <div *ngFor="let r of recentCreditResults()" class="credit-item">
-                <div class="credit-ref">{{ r.borrower_reference }}</div>
-                <div class="credit-score" [class]="scoreClass(r.credit_score)">
-                  {{ r.credit_score || 'N/A' }}
-                </div>
-                <div>
-                  <span class="badge" [class]="riskBadge(r.risk_level)">{{ r.risk_level || '–' }}</span>
-                </div>
-                <div class="text-muted" style="font-size:0.75rem">{{ r.received_at | date:'dd MMM' }}</div>
+          <div class="card">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 font-bold text-xs flex items-center justify-center">Cr</span>
+                <h2 class="text-base mb-0">Credit Results</h2>
               </div>
-              <div *ngIf="recentCreditResults().length === 0" class="empty-state">
-                <div class="empty-icon">Cr</div>
+              <a routerLink="/credit-results" class="btn btn-outline btn-sm">All</a>
+            </div>
+            <div class="flex flex-col">
+              <div
+                *ngFor="let r of recentCreditResults().slice(0, 7)"
+                class="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-b-0"
+              >
+                <div class="min-w-0">
+                  <div class="text-[0.82rem] font-semibold truncate">{{ r.borrower_reference }}</div>
+                  <div class="text-[0.72rem] text-muted">{{ r.received_at | date:'dd MMM · HH:mm' }}</div>
+                </div>
+                <div class="flex items-center gap-2.5 shrink-0">
+                  <span class="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-sm"
+                        [class]="scoreTile(r.credit_score)">
+                    {{ r.credit_score ?? '–' }}
+                  </span>
+                  <span class="badge hidden sm:inline-flex" [class]="riskBadge(r.risk_level)">{{ r.risk_level || '–' }}</span>
+                </div>
+              </div>
+              <div *ngIf="recentCreditResults().length === 0" class="empty-state !py-8">
                 <p>No credit results yet</p>
               </div>
             </div>
           </div>
 
           <!-- Loan Status Distribution -->
-          <div class="card section-card">
-            <div class="section-header">
-              <h2>Loan Status</h2>
+          <div class="card xl:col-span-2">
+            <div class="flex items-center justify-between mb-5">
+              <div class="flex items-center gap-2.5">
+                <span class="w-8 h-8 rounded-lg bg-violet-100 text-violet-700 font-bold text-xs flex items-center justify-center">Ln</span>
+                <h2 class="text-base mb-0">Loan Status Distribution</h2>
+              </div>
               <a routerLink="/loans" class="btn btn-outline btn-sm">View All</a>
             </div>
-            <div class="loan-status-list">
-              <div *ngFor="let s of loanStats()" class="loan-stat">
-                <div class="loan-stat-bar-wrap">
-                  <div class="loan-stat-label">{{ s.label }}</div>
-                  <div class="loan-stat-count">{{ s.count }}</div>
+            <div class="grid gap-5 sm:grid-cols-2">
+              <div *ngFor="let s of loanStats()">
+                <div class="flex justify-between items-baseline mb-1.5">
+                  <span class="text-sm font-medium text-ink">{{ s.label }}</span>
+                  <span class="text-sm font-bold">{{ s.count }} <span class="text-xs font-normal text-muted">({{ s.pct }}%)</span></span>
                 </div>
-                <div class="loan-bar-bg">
-                  <div class="loan-bar" [style.width.%]="s.pct" [style.background]="s.color"></div>
+                <div class="bg-surface-3 rounded-full h-2.5 overflow-hidden">
+                  <div class="h-full rounded-full transition-all duration-1000" [style.width.%]="s.pct" [style.background]="s.color"></div>
                 </div>
               </div>
+              <div *ngIf="loanStats().length === 0" class="empty-state sm:col-span-2"><p>No loans yet</p></div>
             </div>
           </div>
 
-        </div><!-- /content-grid -->
+          <!-- Quick actions -->
+          <div class="card">
+            <div class="flex items-center gap-2.5 mb-4">
+              <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center">Qa</span>
+              <h2 class="text-base mb-0">Quick Actions</h2>
+            </div>
+            <div class="grid gap-2.5">
+              <a routerLink="/loan-approvals" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition group">
+                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">Ap</strong> Approve pending loans</span>
+                <span class="badge badge-warning">{{ pendingLoans().length }}</span>
+              </a>
+              <a routerLink="/daire" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition">
+                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">DC</strong> DAIRE data exchange</span>
+                <span class="text-muted">&rsaquo;</span>
+              </a>
+              <a routerLink="/borrowers" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition">
+                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">Br</strong> Browse borrowers</span>
+                <span class="text-muted">&rsaquo;</span>
+              </a>
+              <a routerLink="/integration-settings" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition">
+                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">Ak</strong> Manage API keys</span>
+                <span class="text-muted">&rsaquo;</span>
+              </a>
+            </div>
+          </div>
+        </div>
       </ng-container>
     </div>
   `,
-  styles: [`
-    .dashboard { }
-
-    /* KPI Cards */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-    .kpi-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-      position: relative;
-      box-shadow: var(--shadow-sm);
-      transition: box-shadow 0.2s, transform 0.2s;
-    }
-    .kpi-card:hover { box-shadow: var(--shadow); transform: translateY(-2px); }
-    .kpi-icon {
-      width: 48px; height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      flex-shrink: 0;
-    }
-    .kpi-body { flex: 1; min-width: 0; }
-    .kpi-value { font-size: 1.6rem; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
-    .kpi-label { font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px; }
-    .kpi-link {
-      position: absolute;
-      bottom: 10px; right: 12px;
-      font-size: 0.75rem;
-      color: var(--primary);
-      text-decoration: none;
-      opacity: 0.7;
-      transition: opacity 0.2s;
-    }
-    .kpi-card:hover .kpi-link { opacity: 1; }
-
-    /* Content grid */
-    .content-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 1.25rem;
-    }
-    .section-card { padding: 1.25rem; }
-    .span-2 { grid-column: span 2; }
-
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-    .section-header h2 { font-size: 1rem; }
-
-    /* Borrower table specifics */
-    .ref { font-size: 0.75rem; background: var(--surface-3); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
-    .action-code { font-size: 0.72rem; background: var(--surface-3); padding: 2px 5px; border-radius: 4px; font-family: monospace; }
-
-    /* Pending approvals card */
-    .approvals-card { margin-bottom: 1.25rem; }
-    .approvals-card .credit-item { align-items: center; }
-
-    /* KPI icon letter tiles */
-    .kpi-icon-blue { background:#dbeafe; color:#1e40af; }
-    .kpi-icon-green { background:#d1fae5; color:#065f46; }
-    .kpi-icon-amber { background:#fef3c7; color:#92400e; }
-    .kpi-icon-violet { background:#ede9fe; color:#5b21b6; }
-    .kpi-icon-red { background:#fee2e2; color:#991b1b; }
-    .kpi-icon-teal { background:#ccfbf1; color:#115e59; }
-
-    /* Credit results */
-    .credit-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .credit-item {
-      display: grid;
-      grid-template-columns: 1fr auto auto auto;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .credit-item:last-child { border-bottom: none; }
-    .credit-ref { font-size: 0.82rem; font-weight: 600; }
-    .credit-score { font-size: 1.1rem; font-weight: 700; }
-    .score-low { color: #059669; }
-    .score-medium { color: #d97706; }
-    .score-high { color: #dc2626; }
-    .score-na { color: var(--text-muted); }
-
-    /* Loan stats */
-    .loan-status-list { display: flex; flex-direction: column; gap: 1rem; }
-    .loan-stat-bar-wrap { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.82rem; }
-    .loan-stat-label { color: var(--text-secondary); }
-    .loan-stat-count { font-weight: 600; }
-    .loan-bar-bg { background: var(--surface-3); border-radius: 99px; height: 8px; overflow: hidden; }
-    .loan-bar { height: 100%; border-radius: 99px; transition: width 1s ease; }
-
-    @media (max-width: 1100px) {
-      .content-grid { grid-template-columns: 1fr 1fr; }
-      .span-2 { grid-column: span 2; }
-    }
-    @media (max-width: 700px) {
-      .content-grid { grid-template-columns: 1fr; }
-      .span-2 { grid-column: span 1; }
-      .kpi-grid { grid-template-columns: 1fr 1fr; }
-    }
-  `]
 })
 export class DashboardComponent implements OnInit {
   private api = inject(ApiService);
@@ -355,11 +295,15 @@ export class DashboardComponent implements OnInit {
     return m[s] ?? s;
   }
 
-  scoreClass(score: number | null): string {
-    if (!score) return 'score-na';
-    if (score >= 700) return 'score-low';
-    if (score >= 600) return 'score-medium';
-    return 'score-high';
+  initialsOf(name: string): string {
+    return (name || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+  }
+
+  scoreTile(score: number | null): string {
+    if (!score) return 'bg-surface-3 text-muted';
+    if (score >= 700) return 'bg-emerald-100 text-emerald-700';
+    if (score >= 600) return 'bg-amber-100 text-amber-700';
+    return 'bg-red-100 text-red-700';
   }
 
   riskBadge(risk: string): string {

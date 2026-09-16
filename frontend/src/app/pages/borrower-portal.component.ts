@@ -9,169 +9,150 @@ import { AuthService } from '../services/auth.service';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <div class="portal-page">
+    <div class="max-w-[1100px]">
       <!-- Loading -->
       <div *ngIf="loading()" class="loading-page">
-        <div class="spinner" style="width:32px;height:32px;border-width:3px"></div>
+        <div class="spinner w-8 h-8"></div>
         <p>Loading your account…</p>
       </div>
 
       <ng-container *ngIf="!loading() && borrower() as b">
         <!-- Welcome Banner -->
-        <div class="welcome-banner">
-          <div class="welcome-avatar">{{ initials }}</div>
-          <div>
-            <h1>Welcome, {{ b.full_name }}</h1>
-            <p class="text-muted">Customer ID: {{ b.customer_id }} · {{ b.borrower_reference }}</p>
+        <div class="flex items-center gap-5 bg-linear-to-r from-sidebar to-primary rounded-2xl p-8 mb-6 text-white">
+          <div class="w-[60px] h-[60px] rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold shrink-0">
+            {{ initials }}
           </div>
-          <a routerLink="/portal/apply-loan" class="btn btn-primary" style="margin-left:auto">
-            + Apply for Loan
-          </a>
+          <div>
+            <h1 class="text-white text-2xl mb-0.5">Welcome, {{ b.full_name }}</h1>
+            <p class="text-white/70 text-sm mb-0">Customer ID: {{ b.customer_id }} · {{ b.borrower_reference }}</p>
+          </div>
+          <a routerLink="/portal/apply-loan" class="btn btn-primary ml-auto">Apply for Loan</a>
         </div>
 
         <!-- Quick Stats -->
-        <div class="stats-row">
-          <div class="stat-box">
-            <div class="stat-val">{{ b.account_information?.total_accounts || 0 }}</div>
-            <div class="stat-lbl">Accounts</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div class="card text-center p-5">
+            <div class="text-xl font-bold text-primary">{{ b.account_information?.total_accounts || 0 }}</div>
+            <div class="text-xs text-ink-soft mt-1">Accounts</div>
           </div>
-          <div class="stat-box">
-            <div class="stat-val">{{ activeLoans }}</div>
-            <div class="stat-lbl">Active Loans</div>
+          <div class="card text-center p-5">
+            <div class="text-xl font-bold text-primary">{{ activeLoans }}</div>
+            <div class="text-xs text-ink-soft mt-1">Active Loans</div>
           </div>
-          <div class="stat-box">
-            <div class="stat-val">TZS {{ formatNum(b.account_information?.total_balance || 0) }}</div>
-            <div class="stat-lbl">Total Balance</div>
+          <div class="card text-center p-5">
+            <div class="text-xl font-bold text-primary">TZS {{ formatNum(b.account_information?.total_balance || 0) }}</div>
+            <div class="text-xs text-ink-soft mt-1">Total Balance</div>
           </div>
-          <div class="stat-box">
-            <div class="stat-val">{{ b.employment_status }}</div>
-            <div class="stat-lbl">Employment</div>
+          <div class="card text-center p-5">
+            <div class="text-xl font-bold text-primary">{{ b.employment_status }}</div>
+            <div class="text-xs text-ink-soft mt-1">Employment</div>
           </div>
         </div>
 
-        <div class="two-col">
+        <div class="grid gap-5 md:grid-cols-2">
           <!-- Personal Information -->
           <div class="card">
-            <h2 class="section-title">Personal Information</h2>
-            <div class="info-grid">
-              <div class="info-row"><span class="info-label">Full Name</span><span>{{ b.full_name }}</span></div>
-              <div class="info-row"><span class="info-label">Age</span><span>{{ b.age }}</span></div>
-              <div class="info-row"><span class="info-label">Gender</span><span>{{ b.gender }}</span></div>
-              <div class="info-row"><span class="info-label">Employment</span><span>{{ b.employment_status }}</span></div>
-              <div class="info-row"><span class="info-label">Monthly Income</span><span>TZS {{ formatNum(b.income) }}</span></div>
-              <div class="info-row"><span class="info-label">Currency</span><span>{{ b.currency }}</span></div>
+            <h2 class="text-base mb-4">Personal Information</h2>
+            <div class="flex flex-col">
+              <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Full Name</span><span>{{ b.full_name }}</span></div>
+              <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Age</span><span>{{ b.age }}</span></div>
+              <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Gender</span><span>{{ b.gender }}</span></div>
+              <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Employment</span><span>{{ b.employment_status }}</span></div>
+              <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Monthly Income</span><span>TZS {{ formatNum(b.income) }}</span></div>
+              <div class="flex justify-between text-sm py-1.5"><span class="text-ink-soft font-medium">Currency</span><span>{{ b.currency }}</span></div>
             </div>
 
-            <div *ngIf="b.business_information?.business_name" style="margin-top:1.25rem">
-              <h3 style="font-size:0.95rem;margin-bottom:0.75rem;color:var(--text-secondary)">Business Information</h3>
-              <div class="info-grid">
-                <div class="info-row"><span class="info-label">Business Name</span><span>{{ b.business_information.business_name }}</span></div>
-                <div class="info-row"><span class="info-label">Type</span><span>{{ b.business_information.business_type }}</span></div>
-                <div class="info-row"><span class="info-label">Industry</span><span>{{ b.business_information.industry }}</span></div>
-                <div class="info-row"><span class="info-label">Annual Revenue</span><span>TZS {{ formatNum(b.business_information.annual_revenue) }}</span></div>
+            <div *ngIf="b.business_information?.business_name" class="mt-5">
+              <h3 class="text-[0.95rem] mb-2 text-ink-soft">Business Information</h3>
+              <div class="flex flex-col">
+                <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Business Name</span><span>{{ b.business_information.business_name }}</span></div>
+                <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Type</span><span>{{ b.business_information.business_type }}</span></div>
+                <div class="flex justify-between text-sm py-1.5 border-b border-line"><span class="text-ink-soft font-medium">Industry</span><span>{{ b.business_information.industry }}</span></div>
+                <div class="flex justify-between text-sm py-1.5"><span class="text-ink-soft font-medium">Annual Revenue</span><span>TZS {{ formatNum(b.business_information.annual_revenue) }}</span></div>
               </div>
             </div>
           </div>
 
           <!-- Accounts -->
           <div class="card">
-            <h2 class="section-title">My Accounts</h2>
-            <div *ngFor="let acc of b.accounts" class="account-card">
-              <div class="account-header">
+            <h2 class="text-base mb-4">My Accounts</h2>
+            <div *ngFor="let acc of b.accounts" class="border border-line rounded-lg p-4 mb-3">
+              <div class="flex justify-between items-start mb-3">
                 <div>
-                  <div class="account-name">{{ acc.account_name }}</div>
-                  <div class="account-ref text-muted">{{ acc.account_reference }}</div>
+                  <div class="font-semibold text-[0.9rem]">{{ acc.account_name }}</div>
+                  <div class="text-xs text-muted">{{ acc.account_reference }}</div>
                 </div>
-                <span class="badge" [class]="acc.status === 'ACTIVE' ? 'badge-success' : 'badge-neutral'">
-                  {{ acc.status }}
-                </span>
+                <span class="badge" [class]="acc.status === 'ACTIVE' ? 'badge-success' : 'badge-neutral'">{{ acc.status }}</span>
               </div>
-              <div class="account-balance">
-                <span class="bal-label">Balance</span>
-                <span class="bal-value">TZS {{ formatNum(acc.balance) }}</span>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs text-ink-soft">Balance</span>
+                <span class="text-lg font-bold text-primary">TZS {{ formatNum(acc.balance) }}</span>
               </div>
-              <div class="account-meta">
-                <span>{{ acc.account_type }}</span>
-                <span>·</span>
-                <span>Since {{ acc.customer_since }}</span>
+              <div class="text-xs text-muted flex gap-1.5">
+                <span>{{ acc.account_type }}</span><span>·</span><span>Since {{ acc.customer_since }}</span>
               </div>
             </div>
             <div *ngIf="!b.accounts?.length" class="empty-state">
-              <div class="empty-icon">Ac</div><p>No accounts found</p>
+              <p>No accounts found</p>
             </div>
           </div>
         </div>
 
         <!-- Loans Section -->
-        <div class="card" style="margin-top:1.25rem">
-          <div class="section-header">
-            <h2 class="section-title" style="margin-bottom:0">My Loans</h2>
-            <a routerLink="/portal/apply-loan" class="btn btn-primary btn-sm">+ Apply for Loan</a>
+        <div class="card mt-5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base mb-0">My Loans</h2>
+            <a routerLink="/portal/apply-loan" class="btn btn-primary btn-sm">Apply for Loan</a>
           </div>
 
-          <div *ngIf="b.loans?.length" class="table-wrap" style="margin-top:1rem">
+          <div class="table-wrap mt-4" *ngIf="b.loans?.length">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Loan ID</th>
-                  <th>Amount</th>
-                  <th>Outstanding</th>
-                  <th>Duration</th>
-                  <th>Interest</th>
-                  <th>Date</th>
-                  <th>Status</th>
+                  <th>Loan ID</th><th>Amount</th><th>Outstanding</th><th>Duration</th>
+                  <th>Interest</th><th>Date</th><th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let loan of b.loans">
-                  <td><code style="font-size:0.75rem">{{ loan.loan_id }}</code></td>
+                  <td><code class="text-xs font-mono">{{ loan.loan_id }}</code></td>
                   <td>TZS {{ formatNum(loan.loan_amount) }}</td>
                   <td>TZS {{ formatNum(loan.outstanding_balance) }}</td>
                   <td>{{ loan.loan_duration_months }} months</td>
                   <td>{{ loan.interest_rate }}%</td>
                   <td>{{ loan.loan_date }}</td>
-                  <td>
-                    <span class="badge" [class]="loanStatusBadge(loan.status)">{{ loan.status }}</span>
-                  </td>
+                  <td><span class="badge" [class]="loanStatusBadge(loan.status)">{{ loan.status }}</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
 
           <div *ngIf="!b.loans?.length" class="empty-state">
-            <div class="empty-icon">Ln</div>
             <p>No loans yet. <a routerLink="/portal/apply-loan">Apply for your first loan</a>.</p>
           </div>
         </div>
 
         <!-- Repayment History -->
-        <div class="card" style="margin-top:1.25rem" *ngIf="b.repayments?.length">
-          <h2 class="section-title">Repayment History</h2>
-          <div class="table-wrap" style="margin-top:1rem">
+        <div class="card mt-5" *ngIf="b.repayments?.length">
+          <h2 class="text-base mb-4">Repayment History</h2>
+          <div class="table-wrap">
             <table class="data-table">
               <thead>
                 <tr>
-                  <th>Loan</th>
-                  <th>Amount Paid</th>
-                  <th>Date</th>
-                  <th>Due Date</th>
-                  <th>Days Overdue</th>
-                  <th>Status</th>
+                  <th>Loan</th><th>Amount Paid</th><th>Date</th><th>Due Date</th><th>Days Overdue</th><th>Status</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngFor="let r of b.repayments">
-                  <td><code style="font-size:0.75rem">{{ r.loan_reference }}</code></td>
+                  <td><code class="text-xs font-mono">{{ r.loan_reference }}</code></td>
                   <td>TZS {{ formatNum(r.repayment_amount) }}</td>
                   <td>{{ r.repayment_date }}</td>
                   <td>{{ r.due_date }}</td>
-                  <td [class]="r.days_overdue > 0 ? 'text-danger' : ''">
+                  <td [class.text-red-600]="r.days_overdue > 0">
                     {{ r.days_overdue > 0 ? r.days_overdue + ' days' : 'On time' }}
                   </td>
                   <td>
-                    <span class="badge" [class]="r.default_status === 'CURRENT' ? 'badge-success' : 'badge-danger'">
-                      {{ r.default_status }}
-                    </span>
+                    <span class="badge" [class]="r.default_status === 'CURRENT' ? 'badge-success' : 'badge-danger'">{{ r.default_status }}</span>
                   </td>
                 </tr>
               </tbody>
@@ -185,80 +166,6 @@ import { AuthService } from '../services/auth.service';
       </div>
     </div>
   `,
-  styles: [`
-    .portal-page { max-width: 1100px; }
-
-    .welcome-banner {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      background: linear-gradient(135deg, #1e2235, #1a56db);
-      border-radius: var(--radius-lg);
-      padding: 1.75rem 2rem;
-      margin-bottom: 1.5rem;
-      color: #fff;
-    }
-    .welcome-avatar {
-      width: 60px; height: 60px;
-      background: rgba(255,255,255,0.2);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.4rem;
-      font-weight: 700;
-      color: #fff;
-      flex-shrink: 0;
-    }
-    .welcome-banner h1 { color: #fff; font-size: 1.4rem; margin-bottom: 0.25rem; }
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 1rem;
-      margin-bottom: 1.25rem;
-    }
-    .stat-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      text-align: center;
-      box-shadow: var(--shadow-sm);
-    }
-    .stat-val { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
-    .stat-lbl { font-size: 0.78rem; color: var(--text-secondary); margin-top: 4px; }
-
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-
-    .section-title { font-size: 1rem; margin-bottom: 1rem; }
-    .section-header { display: flex; align-items: center; justify-content: space-between; }
-
-    .info-grid { display: flex; flex-direction: column; gap: 0.6rem; }
-    .info-row { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 6px 0; border-bottom: 1px solid var(--border); }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { color: var(--text-secondary); font-weight: 500; }
-
-    .account-card {
-      border: 1px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 1rem;
-      margin-bottom: 0.75rem;
-    }
-    .account-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem; }
-    .account-name { font-weight: 600; font-size: 0.9rem; }
-    .account-ref { font-size: 0.75rem; }
-    .account-balance { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-    .bal-label { font-size: 0.78rem; color: var(--text-secondary); }
-    .bal-value { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
-    .account-meta { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 0.4rem; }
-
-    @media (max-width: 768px) {
-      .two-col { grid-template-columns: 1fr; }
-      .stats-row { grid-template-columns: 1fr 1fr; }
-      .welcome-banner { flex-direction: column; text-align: center; }
-    }
-  `]
 })
 export class BorrowerPortalComponent implements OnInit {
   private api = inject(ApiService);
@@ -292,7 +199,7 @@ export class BorrowerPortalComponent implements OnInit {
   loanStatusBadge(status: string): string {
     const m: Record<string, string> = {
       ACTIVE: 'badge-info', PENDING: 'badge-warning',
-      PAID_OFF: 'badge-success', DEFAULTED: 'badge-danger',
+      REJECTED: 'badge-danger', PAID_OFF: 'badge-success', DEFAULTED: 'badge-danger',
     };
     return m[status] ?? 'badge-neutral';
   }

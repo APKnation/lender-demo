@@ -7,45 +7,42 @@ import { ApiService, Transaction } from '../services/api.service';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="page">
-      <h1>Transactions</h1>
-      <p class="subtitle">All transactions loaded from backend APIs.</p>
+    <div class="p-8">
+      <h1 class="text-2xl mb-1">Transactions</h1>
+      <p class="text-ink-soft mb-6">All transactions loaded from backend APIs.</p>
 
-      <div class="loading" *ngIf="loading()">Loading transactions…</div>
-      <div class="error" *ngIf="error()">{{ error() }}</div>
+      <div class="py-8 text-center text-ink-soft" *ngIf="loading()">Loading transactions…</div>
+      <div class="alert alert-danger" *ngIf="error()">{{ error() }}</div>
 
-      <table class="data-table" *ngIf="!loading()">
-        <thead>
-          <tr><th>Transaction ID</th><th>Date</th><th>Type</th><th>Direction</th>
+      <div class="table-wrap" *ngIf="!loading()">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Transaction ID</th><th>Date</th><th>Type</th><th>Direction</th>
               <th>Amount</th><th>Balance After</th><th>Currency</th><th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let t of transactions()">
-            <td>{{ t.transaction_id }}</td>
-            <td>{{ t.transaction_date | date:'short' }}</td>
-            <td>{{ t.type }}</td>
-            <td>{{ t.direction }}</td>
-            <td>{{ t.amount | number:'1.0-0' }}</td>
-            <td>{{ t.balance_after | number:'1.0-0' }}</td>
-            <td>{{ t.currency }}</td>
-            <td>{{ t.status }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <p *ngIf="!loading() && transactions().length === 0" class="no-results">No transactions found.</p>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of transactions()">
+              <td>{{ t.transaction_id }}</td>
+              <td>{{ t.transaction_date | date:'short' }}</td>
+              <td>{{ t.type }}</td>
+              <td>
+                <span class="badge" [class]="t.direction === 'CREDIT' ? 'badge-success' : 'badge-neutral'">{{ t.direction }}</span>
+              </td>
+              <td [class]="t.direction === 'CREDIT' ? 'text-emerald-600' : 'text-red-600'">
+                {{ t.amount | number:'1.0-0' }}
+              </td>
+              <td>{{ t.balance_after | number:'1.0-0' }}</td>
+              <td>{{ t.currency }}</td>
+              <td>{{ t.status }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p *ngIf="!loading() && transactions().length === 0" class="empty-state">No transactions found.</p>
     </div>
   `,
-  styles: [`
-    .page { padding: 2rem; }
-    .subtitle { color: #666; }
-    .data-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    .data-table th, .data-table td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #eee; font-size: 0.85rem; }
-    .data-table th { background: #f8f9fa; }
-    .loading, .error, .no-results { padding: 2rem; text-align: center; }
-    .error { color: #e94560; }
-    .no-results { color: #999; }
-  `]
 })
 export class TransactionsComponent implements OnInit {
   transactions = signal<Transaction[]>([]);

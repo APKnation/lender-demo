@@ -8,67 +8,61 @@ import { ApiService, IntegrationCredential } from '../services/api.service';
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="page">
-      <h1>Integration Settings</h1>
-      <p class="subtitle">Manage API keys for DAIRE Central System and other integrations.</p>
+    <div class="p-8">
+      <h1 class="text-2xl mb-1">Integration Settings</h1>
+      <p class="text-ink-soft mb-6">Manage API keys for DAIRE Central System and other integrations.</p>
 
-      <div class="card">
-        <h2>Create New API Key</h2>
-        <form (ngSubmit)="createKey()" #form>
-          <div class="form-row">
-            <input type="text" placeholder="Key name" [(ngModel)]="newKey.name" name="name" required />
-            <select [(ngModel)]="newKey.role" name="role">
+      <div class="card mb-6">
+        <h2 class="text-base mb-4">Create New API Key</h2>
+        <form (ngSubmit)="createKey()" #form="ngForm">
+          <div class="grid gap-4 md:grid-cols-2 mb-4">
+            <input type="text" class="form-control" placeholder="Key name" [(ngModel)]="newKey.name" name="name" required />
+            <select class="form-control" [(ngModel)]="newKey.role" name="role">
               <option value="CENTRAL_SYSTEM">DAIRE Central System</option>
               <option value="DATA_OFFICER">Data Officer</option>
               <option value="AUDITOR">Auditor</option>
             </select>
           </div>
-          <div class="form-row">
-            <input type="text" placeholder="Lender ID" [(ngModel)]="newKey.lender_id" name="lender_id" />
-            <button type="submit" [disabled]="!newKey.name">Create Key</button>
+          <div class="flex gap-4 mb-4">
+            <input type="text" class="form-control flex-1" placeholder="Lender ID" [(ngModel)]="newKey.lender_id" name="lender_id" />
+            <button type="submit" class="btn btn-primary" [disabled]="!newKey.name">Create Key</button>
           </div>
         </form>
       </div>
 
-      <div class="card" *ngIf="createdKey()">
-        <h2>New Key Created (show once)</h2>
-        <code class="key">{{ createdKey() }}</code>
-        <p class="warning">Store this key securely. It will not be shown again.</p>
+      <div class="card mb-6 border-l-4 border-l-amber-500" *ngIf="createdKey()">
+        <h2 class="text-base mb-2">New Key Created (show once)</h2>
+        <code class="block bg-surface-3 px-3 py-2 rounded font-mono text-sm break-all">{{ createdKey() }}</code>
+        <p class="text-danger text-xs mt-2">Store this key securely. It will not be shown again.</p>
       </div>
 
       <div class="card">
-        <h2>Existing Credentials</h2>
-        <table class="data-table">
-          <thead><tr><th>Name</th><th>Lender ID</th><th>Role</th><th>Prefix</th><th>Status</th><th>Created</th><th>Last Used</th></tr></thead>
-          <tbody>
-            <tr *ngFor="let c of credentials()">
-              <td>{{ c.name }}</td>
-              <td>{{ c.lender_id }}</td>
-              <td>{{ c.role }}</td>
-              <td>{{ c.key_prefix }}…</td>
-              <td>{{ c.is_active ? 'Active' : 'Inactive' }}</td>
-              <td>{{ c.created_at | date:'short' }}</td>
-              <td>{{ c.last_used_at ? (c.last_used_at | date:'short') : 'Never' }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <h2 class="text-base mb-4">Existing Credentials</h2>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th><th>Lender ID</th><th>Role</th><th>Prefix</th>
+                <th>Status</th><th>Created</th><th>Last Used</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of credentials()">
+                <td>{{ c.name }}</td>
+                <td>{{ c.lender_id }}</td>
+                <td>{{ c.role }}</td>
+                <td class="font-mono text-xs">{{ c.key_prefix }}…</td>
+                <td><span class="badge" [class]="c.is_active ? 'badge-success' : 'badge-neutral'">{{ c.is_active ? 'Active' : 'Inactive' }}</span></td>
+                <td>{{ c.created_at | date:'short' }}</td>
+                <td>{{ c.last_used_at ? (c.last_used_at | date:'short') : 'Never' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p *ngIf="credentials().length === 0" class="empty-state">No credentials yet.</p>
       </div>
     </div>
   `,
-  styles: [`
-    .page { padding: 2rem; }
-    .subtitle { color: #666; }
-    .card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.08); margin-bottom: 1.5rem; }
-    .form-row { display: flex; gap: 1rem; margin-bottom: 1rem; }
-    .form-row input, .form-row select { padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; }
-    .form-row input { flex: 1; }
-    .form-row button { padding: 0.5rem 1.5rem; background: #0f3460; color: white; border: none; border-radius: 4px; cursor: pointer; }
-    .data-table { width: 100%; border-collapse: collapse; }
-    .data-table th, .data-table td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #eee; }
-    .data-table th { background: #f8f9fa; }
-    .key { display: block; background: #f8f9fa; padding: 0.5rem; border-radius: 4px; font-family: monospace; font-size: 1rem; }
-    .warning { color: #e94560; font-size: 0.8rem; margin-top: 0.5rem; }
-  `]
 })
 export class IntegrationSettingsComponent implements OnInit {
   credentials = signal<IntegrationCredential[]>([]);

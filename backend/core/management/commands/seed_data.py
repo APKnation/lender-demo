@@ -178,14 +178,21 @@ class Command(BaseCommand):
                 )
                 self.stdout.write(f"  Created {role} user: {email}")
 
-        cred, plaintext_key = IntegrationCredential.create_key(
-            name="DAIRE Central System",
-            role=Role.CENTRAL_SYSTEM,
-            institution=institution,
-            permissions=["pull", "push"],
-            lender_id="NMB-001",
-        )
-        self.stdout.write(f"  Created integration API key: {plaintext_key}")
+        existing_cred = IntegrationCredential.objects.filter(
+            name="DAIRE Central System", role=Role.CENTRAL_SYSTEM, institution=institution
+        ).first()
+        if existing_cred:
+            cred = existing_cred
+            plaintext_key = None  # only shown on first creation (hash is not reversible)
+        else:
+            cred, plaintext_key = IntegrationCredential.create_key(
+                name="DAIRE Central System",
+                role=Role.CENTRAL_SYSTEM,
+                institution=institution,
+                permissions=["pull", "push"],
+                lender_id="NMB-001",
+            )
+            self.stdout.write(f"  Created integration API key: {plaintext_key}")
 
         borrowers = []
         today = date.today()
@@ -203,6 +210,10 @@ class Command(BaseCommand):
 
         ref_counter = 1001
         for borrower in borrowers:
+            # Skip borrowers already fully seeded (accounts, txns, loans, repayments)
+            if borrower.accounts.exists():
+                ref_counter += len(ACCOUNTS_PER_BORROWER)
+                continue
             for acct_info in ACCOUNTS_PER_BORROWER:
                 acct_ref = f"ACC-NMB-{ref_counter:04d}"
                 account = Account.objects.create(
@@ -317,8 +328,31 @@ class Command(BaseCommand):
                 granted_by=admin_user,
             )
 
-        # Sample credit results
+        # Pending loan applications awaiting admin review (portal-style)
+        for borrower in borrowers:
+            if borrower.customer_id in ("NMB-CUST-0001", "NMB-CUST-0004"):
+                Loan.objects.get_or_create(
+                    loan_id=f"LOAN-NMB-{borrower.borrower_reference.split('-')[-1]}-APPL",
+                    defaults={
+                        "account": borrower.accounts.first(),
+                        "borrower": borrower,
+                        "loan_amount": Decimal(str(random.randint(300000, 2000000))),
+                        "loan_date": today,
+                        "loan_duration_months": random.choice([12, 24]),
+                        "interest_rate": Decimal("10.5"),
+                        "outstanding_balance": Decimal("0"),
+                        "currency": borrower.currency,
+                        "status": LoanStatus.PENDING,
+                        "purpose": random.choice(
+                            ["Business expansion", "School fees", "Home improvement"]
+                        ),
+                    },
+                )
+
+        # Sample credit results (skip if already seeded)
         for borrower in borrowers[:3]:
+            if CreditResult.objects.filter(borrower=borrower).exists():
+                continue
             CreditResult.objects.create(
                 borrower=borrower,
                 result_type="CREDIT_RESULT",
@@ -341,7 +375,7 @@ class Command(BaseCommand):
                 f"  Loans: {Loan.objects.count()}\n"
                 f"  Repayments: {LoanRepayment.objects.count()}\n"
                 f"  Credit results: {CreditResult.objects.count()}\n\n"
-                f"  Central-system API key (for testing):\n  {plaintext_key}"
+                + (f"  Central-system API key (for testing):\n  {plaintext_key}\n" if plaintext_key else ""),
             )
         )
 

@@ -9,51 +9,44 @@ import { ApiService, LoanApplicationResponse } from '../services/api.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <div class="apply-page">
-      <div class="apply-header">
+    <div class="max-w-[760px]">
+      <div class="mb-6">
         <a routerLink="/portal" class="btn btn-ghost btn-sm">Back to My Account</a>
-        <h1>Apply for a Loan</h1>
-        <p class="text-muted">Fill in the details below to submit your loan application. A bank officer will review and approve it.</p>
+        <h1 class="text-2xl mt-3 mb-1">Apply for a Loan</h1>
+        <p class="text-ink-soft">Fill in the details below to submit your loan application. A bank officer will review and approve it.</p>
       </div>
 
       <!-- Success State -->
-      <div *ngIf="result() as res" class="result-card">
-        <div class="result-icon">OK</div>
-        <h2>Application Submitted!</h2>
-        <p>{{ res.message }}</p>
-        <div class="result-details">
-          <div class="result-row"><span>Loan ID</span><strong>{{ res.loan_id }}</strong></div>
-          <div class="result-row"><span>Amount</span><strong>TZS {{ formatNum(res.amount) }}</strong></div>
-          <div class="result-row"><span>Duration</span><strong>{{ res.duration_months }} months</strong></div>
-          <div class="result-row"><span>Status</span><span class="badge badge-warning">{{ res.status }}</span></div>
+      <div *ngIf="result() as res" class="card text-center py-12 px-8 shadow-lg">
+        <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl font-bold mb-4">OK</div>
+        <h2 class="text-xl mb-2">Application Submitted!</h2>
+        <p class="text-ink-soft mb-6">{{ res.message }}</p>
+        <div class="bg-surface-2 rounded-xl p-5 max-w-[360px] mx-auto">
+          <div class="flex justify-between py-2 border-b border-line text-[0.9rem]"><span>Loan ID</span><strong>{{ res.loan_id }}</strong></div>
+          <div class="flex justify-between py-2 border-b border-line text-[0.9rem]"><span>Amount</span><strong>TZS {{ formatNum(res.amount) }}</strong></div>
+          <div class="flex justify-between py-2 border-b border-line text-[0.9rem]"><span>Duration</span><strong>{{ res.duration_months }} months</strong></div>
+          <div class="flex justify-between py-2 text-[0.9rem]"><span>Status</span><span class="badge badge-warning">{{ res.status }}</span></div>
         </div>
-        <a routerLink="/portal" class="btn btn-primary" style="margin-top:1.5rem">Return to My Account</a>
+        <a routerLink="/portal" class="btn btn-primary mt-6">Return to My Account</a>
       </div>
 
       <!-- Application Form -->
-      <div *ngIf="!result()" class="apply-card card">
+      <div *ngIf="!result()" class="card p-8">
         <div *ngIf="error()" class="alert alert-danger">{{ error() }}</div>
 
         <form (ngSubmit)="onSubmit()" #f="ngForm">
-          <div class="form-row">
+          <div class="grid gap-5 md:grid-cols-2">
             <div class="form-group">
-              <label class="form-label">Loan Amount (TZS) *</label>
+              <label class="form-label" for="amount">Loan Amount (TZS) *</label>
               <input
-                id="amount"
-                type="number"
-                name="amount"
-                [(ngModel)]="form.amount"
-                class="form-control"
-                placeholder="e.g. 500000"
-                min="10000"
-                max="50000000"
-                required
+                id="amount" type="number" name="amount" [(ngModel)]="form.amount"
+                class="form-control" placeholder="e.g. 500000" min="10000" max="50000000" required
               />
-              <div class="form-hint">Minimum: TZS 10,000 · Maximum: TZS 50,000,000</div>
+              <div class="form-hint text-xs text-muted mt-1">Minimum: TZS 10,000 · Maximum: TZS 50,000,000</div>
             </div>
 
             <div class="form-group">
-              <label class="form-label">Loan Duration *</label>
+              <label class="form-label" for="duration">Loan Duration *</label>
               <select id="duration" name="duration" [(ngModel)]="form.duration_months" class="form-control" required>
                 <option value="">Select duration…</option>
                 <option value="3">3 months</option>
@@ -69,53 +62,41 @@ import { ApiService, LoanApplicationResponse } from '../services/api.service';
 
           <div class="form-group">
             <label class="form-label">Loan Purpose *</label>
-            <div class="purpose-grid">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
               <div
                 *ngFor="let p of purposes"
-                class="purpose-option"
-                [class.selected]="form.purpose === p.value"
+                class="border-2 rounded-lg py-3 text-center cursor-pointer text-[0.85rem] text-ink-soft transition"
+                [class]="form.purpose === p.value
+                  ? 'border-primary bg-primary-light text-primary font-semibold'
+                  : 'border-line hover:border-primary hover:text-primary'"
                 (click)="form.purpose = p.value"
               >
-                <span class="purpose-icon">{{ p.icon }}</span>
-                <span>{{ p.label }}</span>
+                {{ p.label }}
               </div>
             </div>
           </div>
 
           <!-- Indicative Summary -->
-          <div *ngIf="form.amount && form.duration_months" class="loan-summary">
-            <h3>Indicative Summary</h3>
-            <div class="summary-grid">
-              <div class="summary-item">
-                <div class="s-label">Loan Amount</div>
-                <div class="s-val">TZS {{ formatNum(form.amount) }}</div>
-              </div>
-              <div class="summary-item">
-                <div class="s-label">Est. Interest Rate</div>
-                <div class="s-val">12% p.a.</div>
-              </div>
-              <div class="summary-item">
-                <div class="s-label">Monthly Payment</div>
-                <div class="s-val">TZS {{ formatNum(monthlyPayment) }}</div>
-              </div>
-              <div class="summary-item">
-                <div class="s-label">Total Repayment</div>
-                <div class="s-val">TZS {{ formatNum(totalRepayment) }}</div>
-              </div>
+          <div *ngIf="form.amount && form.duration_months" class="bg-surface-2 border border-line rounded-xl p-5 my-5">
+            <h3 class="text-[0.9rem] mb-3 text-ink-soft">Indicative Summary</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div><div class="text-[0.72rem] text-muted uppercase mb-0.5">Loan Amount</div><div class="font-bold text-primary">TZS {{ formatNum(form.amount) }}</div></div>
+              <div><div class="text-[0.72rem] text-muted uppercase mb-0.5">Est. Interest Rate</div><div class="font-bold text-primary">12% p.a.</div></div>
+              <div><div class="text-[0.72rem] text-muted uppercase mb-0.5">Monthly Payment</div><div class="font-bold text-primary">TZS {{ formatNum(monthlyPayment) }}</div></div>
+              <div><div class="text-[0.72rem] text-muted uppercase mb-0.5">Total Repayment</div><div class="font-bold text-primary">TZS {{ formatNum(totalRepayment) }}</div></div>
             </div>
-            <p class="summary-note">* These are indicative figures. Final terms will be confirmed upon approval.</p>
+            <p class="text-xs text-muted mt-3 mb-0">* These are indicative figures. Final terms will be confirmed upon approval.</p>
           </div>
 
           <div class="form-group">
-            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem">
+            <label class="flex items-center gap-2 cursor-pointer text-sm">
               <input type="checkbox" [(ngModel)]="agreeTerms" name="agreeTerms" required />
               I agree to the terms and conditions, and confirm the information provided is accurate.
             </label>
           </div>
 
           <button
-            id="submit-loan-btn"
-            type="submit"
+            id="submit-loan-btn" type="submit"
             class="btn btn-primary btn-lg"
             [disabled]="loading() || !form.amount || !form.duration_months || !form.purpose || !agreeTerms"
           >
@@ -126,71 +107,6 @@ import { ApiService, LoanApplicationResponse } from '../services/api.service';
       </div>
     </div>
   `,
-  styles: [`
-    .apply-page { max-width: 760px; }
-
-    .apply-header { margin-bottom: 1.5rem; }
-    .apply-header h1 { font-size: 1.5rem; margin: 0.75rem 0 0.5rem; }
-
-    .apply-card { padding: 2rem; }
-
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-    .form-hint { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
-
-    .purpose-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.75rem;
-    }
-    .purpose-option {
-      border: 2px solid var(--border);
-      border-radius: var(--radius-sm);
-      padding: 0.75rem;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-    }
-    .purpose-option:hover { border-color: var(--primary); color: var(--primary); }
-    .purpose-option.selected { border-color: var(--primary); background: var(--primary-light); color: var(--primary); font-weight: 600; }
-    .purpose-icon { display: block; font-size: 1.5rem; margin-bottom: 0.4rem; }
-
-    .loan-summary {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1.25rem;
-      margin: 1.25rem 0;
-    }
-    .loan-summary h3 { font-size: 0.9rem; margin-bottom: 1rem; color: var(--text-secondary); }
-    .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-    .s-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
-    .s-val { font-size: 1rem; font-weight: 700; color: var(--primary); }
-    .summary-note { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.75rem; margin-bottom: 0; }
-
-    /* Result Card */
-    .result-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 3rem 2rem;
-      text-align: center;
-      box-shadow: var(--shadow);
-    }
-    .result-icon { font-size: 4rem; margin-bottom: 1rem; }
-    .result-card h2 { margin-bottom: 0.5rem; }
-    .result-card > p { color: var(--text-secondary); margin-bottom: 1.5rem; }
-    .result-details { background: var(--surface-2); border-radius: var(--radius); padding: 1.25rem; max-width: 360px; margin: 0 auto; }
-    .result-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.9rem; }
-    .result-row:last-child { border-bottom: none; }
-
-    @media (max-width: 600px) {
-      .form-row { grid-template-columns: 1fr; }
-      .purpose-grid { grid-template-columns: repeat(2, 1fr); }
-      .summary-grid { grid-template-columns: 1fr 1fr; }
-    }
-  `]
 })
 export class BorrowerApplyLoanComponent {
   private api = inject(ApiService);
@@ -204,12 +120,12 @@ export class BorrowerApplyLoanComponent {
   form = { amount: null as number | null, duration_months: '', purpose: '' };
 
   purposes = [
-    { icon: '', label: 'Home Improvement', value: 'HOME_IMPROVEMENT' },
-    { icon: '', label: 'Medical', value: 'MEDICAL' },
-    { icon: '', label: 'Education', value: 'EDUCATION' },
-    { icon: '', label: 'Business', value: 'BUSINESS' },
-    { icon: '', label: 'Vehicle', value: 'VEHICLE' },
-    { icon: '', label: 'Other', value: 'OTHER' },
+    { label: 'Home Improvement', value: 'HOME_IMPROVEMENT' },
+    { label: 'Medical', value: 'MEDICAL' },
+    { label: 'Education', value: 'EDUCATION' },
+    { label: 'Business', value: 'BUSINESS' },
+    { label: 'Vehicle', value: 'VEHICLE' },
+    { label: 'Other', value: 'OTHER' },
   ];
 
   get monthlyPayment(): number {
