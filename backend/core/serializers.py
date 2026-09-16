@@ -145,7 +145,7 @@ class NormalizedBorrowerSerializer(serializers.ModelSerializer):
     business_information = serializers.SerializerMethodField()
     account_information = serializers.SerializerMethodField()
     accounts = AccountSerializer(many=True, read_only=True)
-    transactions = TransactionSerializer(many=True, read_only=True)
+    transactions = serializers.SerializerMethodField()
     balance_history = serializers.SerializerMethodField()
     loans = LoanSerializer(many=True, read_only=True)
     repayments = LoanRepaymentSerializer(many=True, read_only=True)
@@ -156,6 +156,10 @@ class NormalizedBorrowerSerializer(serializers.ModelSerializer):
             "business_information", "account_information", "accounts",
             "transactions", "balance_history", "loans", "repayments",
         ]
+
+    def get_transactions(self, obj):
+        txns = Transaction.objects.filter(account__borrower=obj).select_related("account")[:100]
+        return TransactionSerializer(txns, many=True).data
 
     def get_business_information(self, obj):
         try:

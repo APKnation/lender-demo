@@ -58,6 +58,11 @@ export class AuthService {
       this.logout();
       return false;
     }
+    // Force logout for old tokens that don't have a valid role yet
+    if (!this.isStaff() && !this.isBorrower()) {
+      this.logout();
+      return false;
+    }
     return true;
   }
 

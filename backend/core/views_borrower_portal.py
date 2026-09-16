@@ -8,12 +8,13 @@ Borrowers with role=BORROWER can:
 import uuid
 from decimal import Decimal
 
-from rest_framework import generics, status
+from django.utils import timezone as tz
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models import AuditLog, Borrower, Institution, Loan
+from .models import AuditLog, Borrower, Loan
 from .permissions import IsBorrower
 from .serializers import NormalizedBorrowerSerializer
 
@@ -100,7 +101,7 @@ class BorrowerPortalLoanApplyView(APIView):
             borrower=borrower,
             loan_amount=amount,
             outstanding_balance=amount,
-            loan_date=__import__("django.utils.timezone", fromlist=["timezone"]).now().date(),
+            loan_date=tz.now().date(),
             loan_duration_months=duration_months,
             interest_rate=Decimal("12.00"),  # Default rate — bank officer will review
             currency=borrower.currency,
