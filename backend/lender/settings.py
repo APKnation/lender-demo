@@ -181,7 +181,9 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/day",
         "user": "10000/day",
-        "burst": "60/minute",
+        "burst": "120/minute",
+        "sustained": "1000/hour",
+        "central_pull": "300/minute",
     },
 }
 
