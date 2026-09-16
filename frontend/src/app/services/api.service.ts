@@ -68,6 +68,10 @@ export interface Loan {
   outstanding_balance: number;
   currency: string;
   status: string;
+  purpose?: string;
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  review_notes?: string;
 }
 
 export interface Repayment {
@@ -101,21 +105,9 @@ export interface CreditResult {
   created_at: string;
 }
 
-export interface AuditLog {
-  action: string;
-  status: string;
-  log_type: string;
-  borrower_reference: string;
-  request_reference: string | null;
-  identity: string;
-  source_ip: string | null;
-  request_id: string;
-  correlation_id: string;
-  timestamp: string;
-  error_message: string;
-  fields_requested: string[];
-  fields_returned: string[];
-  metadata: any;
+export interface LoanReviewResponse {
+  detail: string;
+  loan: Loan;
 }
 
 export interface IntegrationCredential {
@@ -180,13 +172,6 @@ export class ApiService {
     );
   }
 
-  // Audit Logs
-  getAuditLogs(params: Record<string, string> = {}): Observable<AuditLog[]> {
-    const query = new URLSearchParams(params).toString();
-    const url = query ? `${this.base}/audit/logs/?${query}` : `${this.base}/audit/logs/`;
-    return this.http.get<AuditLog[]>(url);
-  }
-
   // Credit Results
   getCreditResults(borrowerReference?: string): Observable<CreditResult[]> {
     const params = borrowerReference
@@ -224,6 +209,26 @@ export class ApiService {
   // Central
   pullBorrowerData(payload: { borrower_reference: string; request_reference?: string; requested_fields?: string[] }): Observable<PullResponse> {
     return this.http.post<PullResponse>(`${this.base}/central/pull-borrower-data/`, payload);
+  }
+
+  // Admin: loan review (manual approve / reject)
+  listPendingLoans(): Observable<Loan[]> {
+    return this.http.get<Loan[]>(`${this.base}/admin/loans/pending/`);
+  }
+
+  reviewLoan(loanId: string, action: 'approve' | 'reject', notes = ''): Observable<LoanReviewResponse> {
+    return this.http.post<LoanReviewResponse>(
+      `${this.base}/admin/loans/${encodeURIComponent(loanId)}/review/`,
+      { action, notes }
+    );
+  }
+
+  // Admin: DAIRE data exchange
+  daireRequestData(borrowerReference: string, requestedFields: string[] = []): Observable<any> {
+    return this.http.post(`${this.base}/admin/daire/request-data/`, {
+      borrower_reference: borrowerReference,
+      requested_fields: requestedFields,
+    });
   }
 
   // Borrower Portal

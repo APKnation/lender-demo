@@ -6,7 +6,6 @@ Populates the database with sample data for development and testing:
   * accounts, balance history, transactions, loans, repayments
   * integration credentials (API keys)
   * consent records
-  * audit logs (successful and failed pulls)
   * credit results
 
 Usage:
@@ -24,8 +23,6 @@ from django.utils import timezone
 from core.constants import (
     AccountStatus,
     AccountType,
-    AuditAction,
-    AuditStatus,
     BalanceStability,
     ConsentStatus,
     Currency,
@@ -43,7 +40,6 @@ from core.constants import (
 from core.models import (
     Account,
     AccountBalanceHistory,
-    AuditLog,
     Borrower,
     BusinessInformation,
     Consent,
@@ -321,57 +317,6 @@ class Command(BaseCommand):
                 granted_by=admin_user,
             )
 
-        # Sample audit logs
-        AuditLog.record(
-            action=AuditAction.BORROWER_DATA_PULL,
-            status=AuditStatus.SUCCESS,
-            borrower_reference="BRW-TZ-1001",
-            identity=f"API key: {cred.key_prefix}",
-            source_ip="10.0.0.5",
-            request_id="req-001",
-            correlation_id=uuid.uuid4().hex,
-            request_reference=uuid.uuid4(),
-            fields_requested=["income", "accounts", "loans"],
-            fields_returned=["borrower_reference", "income", "accounts", "loans"],
-            log_type="pull",
-        )
-        AuditLog.record(
-            action=AuditAction.BORROWER_DATA_PULL,
-            status=AuditStatus.FAILURE,
-            borrower_reference="BRW-TZ-9999",
-            identity=f"API key: {cred.key_prefix}",
-            source_ip="10.0.0.5",
-            request_id="req-002",
-            correlation_id=uuid.uuid4().hex,
-            error_message="Borrower was not found.",
-            fields_requested=["income"],
-            fields_returned=[],
-            log_type="pull",
-        )
-        AuditLog.record(
-            action=AuditAction.CREDIT_RESULT_PUSH,
-            status=AuditStatus.SUCCESS,
-            borrower_reference="BRW-TZ-1001",
-            identity=f"API key: {cred.key_prefix}",
-            source_ip="10.0.0.5",
-            request_id="req-003",
-            correlation_id=uuid.uuid4().hex,
-            fields_requested=["credit_score", "risk_level"],
-            fields_returned=["result_type"],
-            log_type="push",
-        )
-        AuditLog.record(
-            action=AuditAction.AUTH_FAILURE,
-            status=AuditStatus.FAILURE,
-            borrower_reference="",
-            identity="",
-            source_ip="10.0.0.99",
-            request_id="req-004",
-            correlation_id=uuid.uuid4().hex,
-            error_message="Invalid or unknown API key.",
-            log_type="auth",
-        )
-
         # Sample credit results
         for borrower in borrowers[:3]:
             CreditResult.objects.create(
@@ -395,7 +340,6 @@ class Command(BaseCommand):
                 f"  Transactions: {Transaction.objects.count()}\n"
                 f"  Loans: {Loan.objects.count()}\n"
                 f"  Repayments: {LoanRepayment.objects.count()}\n"
-                f"  Audit logs: {AuditLog.objects.count()}\n"
                 f"  Credit results: {CreditResult.objects.count()}\n\n"
                 f"  Central-system API key (for testing):\n  {plaintext_key}"
             )
@@ -405,7 +349,7 @@ class Command(BaseCommand):
         models = [
             CreditResult, LoanRepayment, Loan, Transaction,
             AccountBalanceHistory, Consent, BusinessInformation,
-            AuditLog, IntegrationCredential, Borrower, Institution,
+            IntegrationCredential, Borrower, Institution,
         ]
         for model in reversed(models):
             model.objects.all().delete()

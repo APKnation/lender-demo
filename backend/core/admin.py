@@ -15,14 +15,11 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from .constants import (
-    AuditAction,
-    AuditStatus,
     InstitutionType,
 )
 from .models import (
     Account,
     AccountBalanceHistory,
-    AuditLog,
     Borrower,
     BusinessInformation,
     Consent,
@@ -100,13 +97,6 @@ class BorrowerAdmin(admin.ModelAdmin):
                 borrower.is_active = False
                 borrower.save(update_fields=["is_active"])
                 count += 1
-                AuditLog.record(
-                    action=AuditAction.BORROWER_DEACTIVATED,
-                    status=AuditStatus.SUCCESS,
-                    borrower_reference=borrower.borrower_reference,
-                    identity=getattr(request.user, "email", str(request.user)),
-                    log_type="model_change",
-                )
         self.message_user(
             request,
             f"{count} borrower(s) deactivated.",
@@ -301,34 +291,6 @@ class IntegrationCredentialAdmin(admin.ModelAdmin):
             )
         else:
             super().save_model(request, obj, form, change)
-
-
-# ------------------------------------------------------------------ #
-#  Audit Log – read-only
-# ------------------------------------------------------------------ #
-@admin.register(AuditLog)
-class AuditLogAdmin(admin.ModelAdmin):
-    list_display = [
-        "action", "status", "borrower_reference", "identity",
-        "source_ip", "request_id", "timestamp", "log_type",
-    ]
-    list_filter = ["action", "status", "log_type", "timestamp"]
-    search_fields = ["borrower_reference", "identity", "request_id", "correlation_id"]
-    readonly_fields = [
-        "action", "status", "log_type", "borrower_reference", "request_reference",
-        "identity", "source_ip", "request_id", "correlation_id", "timestamp",
-        "error_message", "fields_requested", "fields_returned", "metadata",
-    ]
-    date_hierarchy = "timestamp"
-
-    def has_add_permission(self, request):
-        return False
-
-    def has_change_permission(self, request, obj=None):
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        return False
 
 
 # ------------------------------------------------------------------ #

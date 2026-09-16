@@ -9,9 +9,9 @@ const Accounts = () => import('./pages/accounts.component').then(m => m.Accounts
 const Transactions = () => import('./pages/transactions.component').then(m => m.TransactionsComponent);
 const Loans = () => import('./pages/loans.component').then(m => m.LoansComponent);
 const Repayments = () => import('./pages/repayments.component').then(m => m.RepaymentsComponent);
-const PullHistory = () => import('./pages/pull-history.component').then(m => m.PullHistoryComponent);
 const CreditResults = () => import('./pages/credit-results.component').then(m => m.CreditResultsComponent);
-const AuditLogs = () => import('./pages/audit-logs.component').then(m => m.AuditLogsComponent);
+const LoanApprovals = () => import('./pages/loan-approvals.component').then(m => m.LoanApprovalsComponent);
+const DaireAdmin = () => import('./pages/daire-admin.component').then(m => m.DaireAdminComponent);
 const IntegrationSettings = () => import('./pages/integration-settings.component').then(m => m.IntegrationSettingsComponent);
 const Login = () => import('./pages/login.component').then(m => m.LoginComponent);
 const BorrowerPortal = () => import('./pages/borrower-portal.component').then(m => m.BorrowerPortalComponent);
@@ -27,10 +27,10 @@ export const routes: Routes = [
   { path: 'accounts', loadComponent: Accounts, canActivate: [adminGuard] },
   { path: 'transactions', loadComponent: Transactions, canActivate: [adminGuard] },
   { path: 'loans', loadComponent: Loans, canActivate: [adminGuard] },
+  { path: 'loan-approvals', loadComponent: LoanApprovals, canActivate: [adminGuard] },
   { path: 'repayments', loadComponent: Repayments, canActivate: [adminGuard] },
-  { path: 'pull-history', loadComponent: PullHistory, canActivate: [adminGuard] },
   { path: 'credit-results', loadComponent: CreditResults, canActivate: [adminGuard] },
-  { path: 'audit-logs', loadComponent: AuditLogs, canActivate: [adminGuard] },
+  { path: 'daire', loadComponent: DaireAdmin, canActivate: [adminGuard] },
   { path: 'integration-settings', loadComponent: IntegrationSettings, canActivate: [adminGuard] },
 
   // Borrower portal routes

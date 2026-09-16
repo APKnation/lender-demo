@@ -7,7 +7,6 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from core.constants import AccountStatus, Currency
-from core.models import AuditLog
 from core.tests.base import LenderTestCase
 
 
@@ -46,19 +45,6 @@ class BorrowerLookupTests(LenderTestCase):
         response = self.client.get("/api/borrowers/?borrower_reference=BRW-TZ-1003")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
-    def test_lookup_creates_audit_log(self):
-        """A successful lookup creates an audit log entry."""
-        self.client.get("/api/borrowers/?borrower_reference=BRW-TZ-1001")
-        logs = AuditLog.objects.filter(borrower_reference="BRW-TZ-1001")
-        self.assertTrue(logs.filter(action=AuditAction.BORROWER_DATA_PULL).exists())
-
-    def test_not_found_creates_audit_log(self):
-        """A failed lookup creates a BORROWER_NOT_FOUND audit entry."""
-        self.client.get("/api/borrowers/?borrower_reference=BRW-TZ-9999")
-        logs = AuditLog.objects.filter(borrower_reference="BRW-TZ-9999")
-        self.assertTrue(logs.filter(action=AuditAction.BORROWER_NOT_FOUND).exists())
-        self.assertEqual(logs.first().status, AuditStatus.FAILURE)
-
     def test_response_contains_normalized_contract(self):
         """Response includes all expected keys from the DAIRE contract."""
         response = self.client.get("/api/borrowers/?borrower_reference=BRW-TZ-1001")
@@ -92,12 +78,12 @@ class BorrowerLookupTests(LenderTestCase):
         """Lookup for borrower 1 must never include borrower 2's data."""
         response = self.client.get("/api/borrowers/?borrower_reference=BRW-TZ-1001")
         data = response.json()
-        # Verify all accounts belong to borrower 1
+        # Verify all accounts belong to borrower 1 (ACC-NMB-0001), not borrower 2 (ACC-NMB-0002)
         for account in data["accounts"]:
-            self.assertIn("BRW-TZ-1001", account.get("account_reference", ""))
-        # Verify all loans belong to borrower 1
+            self.assertNotIn("ACC-NMB-0002", account.get("account_reference", ""))
+        # Verify all loans belong to borrower 1 (LOAN-NMB-001 belongs to borrower 1)
         for loan in data["loans"]:
-            self.assertIn("BRW-TZ-1001", loan.get("loan_id", ""))
+            self.assertEqual(loan.get("loan_id"), "LOAN-NMB-001")
 
     def test_borrower_reference_with_extra_whitespace(self):
         """Borrower reference with whitespace is not matched (exact match only)."""

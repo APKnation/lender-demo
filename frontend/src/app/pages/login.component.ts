@@ -13,27 +13,27 @@ import { AuthService } from '../services/auth.service';
     <div class="login-shell">
       <div class="login-left">
         <div class="branding">
-          <div class="logo">🏦</div>
+          <div class="logo">N</div>
           <h1>DAIRE Lender Subsystem</h1>
           <p>Secure access to NMB Bank's credit intelligence platform powered by the DAIRE Central System.</p>
         </div>
         <div class="features">
           <div class="feature">
-            <span class="feat-icon">📊</span>
+            <span class="feat-icon">Cr</span>
             <div>
               <strong>Real-time Credit Intelligence</strong>
               <p>Access live credit scoring and risk assessment for all borrowers.</p>
             </div>
           </div>
           <div class="feature">
-            <span class="feat-icon">🔒</span>
+            <span class="feat-icon">Rb</span>
             <div>
               <strong>Role-Based Access</strong>
               <p>Staff, auditor, and borrower portal with granular permissions.</p>
             </div>
           </div>
           <div class="feature">
-            <span class="feat-icon">📋</span>
+            <span class="feat-icon">Au</span>
             <div>
               <strong>Full Audit Trail</strong>
               <p>Every action is logged for compliance and transparency.</p>
@@ -78,7 +78,7 @@ import { AuthService } from '../services/auth.service';
                   autocomplete="current-password"
                 />
                 <button type="button" class="pw-toggle" (click)="showPassword = !showPassword">
-                  {{ showPassword ? '🙈' : '👁️' }}
+                  {{ showPassword ? 'Hide' : 'Show' }}
                 </button>
               </div>
             </div>

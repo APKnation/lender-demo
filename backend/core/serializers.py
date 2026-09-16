@@ -18,7 +18,6 @@ from .constants import (
 from .models import (
     Account,
     AccountBalanceHistory,
-    AuditLog,
     Borrower,
     BusinessInformation,
     Consent,
@@ -87,11 +86,16 @@ class LoanSerializer(serializers.ModelSerializer):
         fields = [
             "loan_id", "account_reference", "loan_amount", "loan_date",
             "loan_duration_months", "interest_rate", "outstanding_balance",
-            "currency", "status", "opened_at", "closed_at",
+            "currency", "status", "purpose", "reviewed_by", "reviewed_at",
+            "review_notes", "opened_at", "closed_at",
             "created_at", "updated_at",
         ]
 
     account_reference = serializers.CharField(source="account.account_reference")
+    reviewed_by = serializers.SerializerMethodField()
+
+    def get_reviewed_by(self, obj):
+        return getattr(obj.reviewed_by, "email", None)
 
 
 class LoanRepaymentSerializer(serializers.ModelSerializer):
@@ -312,19 +316,8 @@ class IntegrationCredentialSerializer(serializers.ModelSerializer):
 
 
 # =========================================================================== #
-#  Audit & credit result
+#  Credit result
 # =========================================================================== #
-class AuditLogSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = AuditLog
-        fields = [
-            "action", "status", "log_type", "borrower_reference",
-            "request_reference", "identity", "source_ip", "request_id",
-            "correlation_id", "timestamp", "error_message",
-            "fields_requested", "fields_returned", "metadata",
-        ]
-
-
 class CreditResultSerializer(serializers.ModelSerializer):
     class Meta:
         model = CreditResult

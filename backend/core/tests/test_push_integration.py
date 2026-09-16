@@ -4,8 +4,7 @@ Tests: data push integration (POST /api/central/receive-credit-result/).
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.constants import AuditAction, AuditStatus
-from core.models import AuditLog, CreditResult
+from core.models import CreditResult
 from core.tests.base import LenderTestCase
 
 
@@ -78,36 +77,6 @@ class PushDataTests(LenderTestCase):
         })
         self.assertIn(response.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
-    def test_push_creates_audit_log(self):
-        """A successful push creates an audit log entry."""
-        self.client.post(self.push_url, {
-            "borrower_reference": "BRW-TZ-1001",
-            "result_type": "CREDIT_RESULT",
-            "credit_score": 720,
-            "reputation": "GOOD",
-            "risk_level": "LOW",
-        })
-        log = AuditLog.objects.filter(
-            action=AuditAction.CREDIT_RESULT_PUSH,
-            borrower_reference="BRW-TZ-1001",
-        ).first()
-        self.assertIsNotNone(log)
-        self.assertEqual(log.status, AuditStatus.SUCCESS)
-
-    def test_push_failed_creates_audit_log(self):
-        """A failed push (borrower not found) creates an audit log."""
-        self.client.post(self.push_url, {
-            "borrower_reference": "BRW-TZ-9999",
-            "result_type": "CREDIT_RESULT",
-            "credit_score": 720,
-        })
-        log = AuditLog.objects.filter(
-            action=AuditAction.CREDIT_RESULT_PUSH,
-            borrower_reference="BRW-TZ-9999",
-        ).first()
-        self.assertIsNotNone(log)
-        self.assertEqual(log.status, AuditStatus.FAILURE)
-
     def test_push_never_exposes_internal_ids(self):
         """Push response must not expose internal database IDs."""
         response = self.client.post(self.push_url, {
@@ -118,3 +87,13 @@ class PushDataTests(LenderTestCase):
         data = response.json()
         self.assertNotIn("id", data)
         self.assertNotIn("internal_id", data)
+
+    def test_admin_jwt_can_receive_credit_results(self):
+        """ADMIN users can receive credit results pushed by DAIRE."""
+        self.client.credentials(HTTP_AUTHORIZATION=self._jwt_headers(self.admin)["Authorization"])
+        response = self.client.post(self.push_url, {
+            "borrower_reference": "BRW-TZ-1001",
+            "credit_score": 700,
+            "risk_level": "LOW",
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)

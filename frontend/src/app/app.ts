@@ -17,13 +17,13 @@ import { AuthService } from './services/auth.service';
     <ng-container *ngIf="auth.isLoggedIn() && auth.isBorrower()">
       <div class="portal-shell">
         <header class="portal-header">
-          <div class="portal-brand">🏦 <strong>NMB</strong> Borrower Portal</div>
+          <div class="portal-brand"><strong>NMB</strong> Borrower Portal</div>
           <nav class="portal-nav">
             <a routerLink="/portal" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">My Account</a>
             <a routerLink="/portal/apply-loan" routerLinkActive="active">Apply for Loan</a>
           </nav>
           <div class="portal-user">
-            <span>👤 {{ auth.userFullName() || auth.userEmail() }}</span>
+            <span>{{ auth.userFullName() || auth.userEmail() }}</span>
             <button class="btn btn-ghost btn-sm" (click)="auth.logout()">Sign Out</button>
           </div>
         </header>
@@ -40,10 +40,10 @@ import { AuthService } from './services/auth.service';
         <aside class="sidebar" [class.collapsed]="sidebarCollapsed()">
           <div class="sidebar-header">
             <div class="sidebar-logo">
-              <span class="logo-icon">🏦</span>
+              <span class="logo-icon">N</span>
               <span class="logo-text">NMB DAIRE</span>
             </div>
-            <button class="collapse-btn" (click)="toggleSidebar()">☰</button>
+            <button class="collapse-btn" (click)="toggleSidebar()">≡</button>
           </div>
 
           <div class="sidebar-user">
@@ -58,53 +58,53 @@ import { AuthService } from './services/auth.service';
             <div class="nav-section">
               <span class="nav-section-label">Overview</span>
               <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" class="nav-item">
-                <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+                <span class="nav-icon">Ov</span><span class="nav-label">Dashboard</span>
               </a>
             </div>
 
             <div class="nav-section">
               <span class="nav-section-label">Borrowers</span>
               <a routerLink="/borrowers" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">👥</span><span class="nav-label">All Borrowers</span>
+                <span class="nav-icon">Br</span><span class="nav-label">All Borrowers</span>
               </a>
               <a routerLink="/accounts" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">🏦</span><span class="nav-label">Accounts</span>
+                <span class="nav-icon">Ac</span><span class="nav-label">Accounts</span>
               </a>
               <a routerLink="/loans" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">💳</span><span class="nav-label">Loans</span>
+                <span class="nav-icon">Ln</span><span class="nav-label">Loans</span>
+              </a>
+              <a routerLink="/loan-approvals" routerLinkActive="active" class="nav-item">
+                <span class="nav-icon">Ap</span><span class="nav-label">Loan Approvals</span>
               </a>
               <a routerLink="/transactions" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">↕️</span><span class="nav-label">Transactions</span>
+                <span class="nav-icon">Tx</span><span class="nav-label">Transactions</span>
               </a>
               <a routerLink="/repayments" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">📅</span><span class="nav-label">Repayments</span>
+                <span class="nav-icon">Rp</span><span class="nav-label">Repayments</span>
               </a>
             </div>
 
             <div class="nav-section">
-              <span class="nav-section-label">Credit & Audit</span>
+              <span class="nav-section-label">Credit & DAIRE</span>
               <a routerLink="/credit-results" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">⭐</span><span class="nav-label">Credit Results</span>
+                <span class="nav-icon">Cr</span><span class="nav-label">Credit Results</span>
               </a>
-              <a routerLink="/audit-logs" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">📋</span><span class="nav-label">Audit Logs</span>
-              </a>
-              <a routerLink="/pull-history" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">🔄</span><span class="nav-label">Pull History</span>
+              <a routerLink="/daire" routerLinkActive="active" class="nav-item">
+                <span class="nav-icon">DC</span><span class="nav-label">DAIRE Central</span>
               </a>
             </div>
 
             <div class="nav-section" *ngIf="auth.isAdmin()">
               <span class="nav-section-label">Administration</span>
               <a routerLink="/integration-settings" routerLinkActive="active" class="nav-item">
-                <span class="nav-icon">🔑</span><span class="nav-label">API Keys</span>
+                <span class="nav-icon">Ak</span><span class="nav-label">API Keys</span>
               </a>
             </div>
           </nav>
 
           <div class="sidebar-footer">
             <button class="nav-item logout-btn" (click)="auth.logout()">
-              <span class="nav-icon">🚪</span><span class="nav-label">Sign Out</span>
+              <span class="nav-icon">So</span><span class="nav-label">Sign Out</span>
             </button>
           </div>
         </aside>
@@ -113,7 +113,7 @@ import { AuthService } from './services/auth.service';
         <div class="admin-content">
           <header class="admin-header">
             <div class="header-left">
-              <button class="collapse-btn-mobile" (click)="toggleSidebar()">☰</button>
+              <button class="collapse-btn-mobile" (click)="toggleSidebar()">≡</button>
               <h1 class="page-title">{{ pageTitle() }}</h1>
             </div>
             <div class="header-right">
@@ -389,8 +389,8 @@ export class App {
       '/transactions': 'Transactions',
       '/repayments': 'Repayments',
       '/credit-results': 'Credit Results',
-      '/audit-logs': 'Audit Logs',
-      '/pull-history': 'Pull History',
+      '/loan-approvals': 'Loan Approvals',
+      '/daire': 'DAIRE Central System',
       '/integration-settings': 'API Keys & Integration',
     };
     if (url.startsWith('/borrowers/')) return 'Borrower Detail';

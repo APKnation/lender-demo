@@ -97,7 +97,7 @@ import { AuthService } from '../services/auth.service';
               </div>
             </div>
             <div *ngIf="!b.accounts?.length" class="empty-state">
-              <div class="empty-icon">🏦</div><p>No accounts found</p>
+              <div class="empty-icon">Ac</div><p>No accounts found</p>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ import { AuthService } from '../services/auth.service';
           </div>
 
           <div *ngIf="!b.loans?.length" class="empty-state">
-            <div class="empty-icon">💳</div>
+            <div class="empty-icon">Ln</div>
             <p>No loans yet. <a routerLink="/portal/apply-loan">Apply for your first loan</a>.</p>
           </div>
         </div>

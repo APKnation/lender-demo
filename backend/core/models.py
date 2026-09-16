@@ -15,8 +15,6 @@ from django.utils import timezone
 from .constants import (
     AccountStatus,
     AccountType,
-    AuditAction,
-    AuditStatus,
     BalanceStability,
     BusinessEntitySize,
     ConsentStatus,
@@ -331,8 +329,19 @@ class Loan(models.Model):
     outstanding_balance = models.DecimalField(max_digits=15, decimal_places=2)
     currency = models.CharField(max_length=3, choices=Currency.choices, default=Currency.TZS)
     status = models.CharField(
-        max_length=20, choices=LoanStatus.choices, default=LoanStatus.ACTIVE
+        max_length=20, choices=LoanStatus.choices, default=LoanStatus.PENDING
     )
+    # Review workflow (bank-requirement decisions on portal applications)
+    purpose = models.CharField(max_length=50, blank=True, help_text="Loan purpose code")
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+        related_name="reviewed_loans",
+        help_text="Admin who approved or rejected this loan",
+    )
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    review_notes = models.TextField(blank=True, help_text="Admin's decision note / rejection reason")
     opened_at = models.DateTimeField(blank=True, null=True)
     closed_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -541,71 +550,6 @@ class CreditResult(models.Model):
 
     def __str__(self):
         return f"CreditResult for {self.borrower.borrower_reference} – {self.credit_score}"
-
-
-# =========================================================================== #
-#  Audit logs
-# =========================================================================== #
-class AuditLog(models.Model):
-    """
-    Unified audit trail for every security-relevant event.
-
-    Covers data pulls, pushes, auth failures, lookups, borrower changes
-    and API-key usage.
-    """
-
-    action = models.CharField(max_length=50, choices=AuditAction.choices)
-    status = models.CharField(max_length=20, choices=AuditStatus.choices)
-    log_type = models.CharField(max_length=20, default="general")
-    borrower_reference = models.CharField(max_length=100, blank=True, db_index=True)
-    request_reference = models.UUIDField(blank=True, null=True, db_index=True)
-    identity = models.CharField(
-        max_length=200, blank=True,
-        help_text="User email, API-key prefix, or integration name",
-    )
-    source_ip = models.GenericIPAddressField(blank=True, null=True)
-    request_id = models.CharField(max_length=64, blank=True, db_index=True)
-    correlation_id = models.CharField(max_length=64, blank=True, db_index=True)
-    timestamp = models.DateTimeField(db_index=True)
-    error_message = models.TextField(blank=True)
-    fields_requested = models.JSONField(default=list, blank=True)
-    fields_returned = models.JSONField(default=list, blank=True)
-    metadata = models.JSONField(default=dict, blank=True)
-
-    class Meta:
-        ordering = ["-timestamp"]
-        verbose_name = "Audit Log"
-        verbose_name_plural = "Audit Logs"
-        indexes = [
-            models.Index(fields=["borrower_reference", "-timestamp"]),
-            models.Index(fields=["action", "-timestamp"]),
-        ]
-
-    def __str__(self):
-        return f"{self.action} – {self.status} – {self.borrower_reference} – {self.timestamp}"
-
-    @classmethod
-    def record(cls, action, status, identity="", borrower_reference="",
-               source_ip=None, request_id="", correlation_id="",
-               error_message="", fields_requested=None, fields_returned=None,
-               log_type="general", request_reference=None, metadata=None):
-        """Convenience factory – creates an audit log entry."""
-        return cls.objects.create(
-            action=action,
-            status=status,
-            log_type=log_type,
-            borrower_reference=borrower_reference,
-            request_reference=request_reference,
-            identity=identity,
-            source_ip=source_ip,
-            request_id=request_id,
-            correlation_id=correlation_id or "",
-            timestamp=timezone.now(),
-            error_message=error_message,
-            fields_requested=fields_requested or [],
-            fields_returned=fields_returned or [],
-            metadata=metadata or {},
-        )
 
 
 # =========================================================================== #

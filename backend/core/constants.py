@@ -78,11 +78,12 @@ class TransactionStatus(models.TextChoices):
 
 
 class LoanStatus(models.TextChoices):
+    PENDING = "PENDING", "Pending Approval"
     ACTIVE = "ACTIVE", "Active"
+    REJECTED = "REJECTED", "Rejected"
     PAID_OFF = "PAID_OFF", "Paid Off"
     DEFAULTED = "DEFAULTED", "Defaulted"
     CLOSED = "CLOSED", "Closed"
-    PENDING = "PENDING", "Pending Disbursement"
 
 
 class DefaultStatus(models.TextChoices):
@@ -114,36 +115,6 @@ class BusinessEntitySize(models.TextChoices):
     SMALL = "SMALL", "Small"
     MEDIUM = "MEDIUM", "Medium"
     LARGE = "LARGE", "Large"
-
-
-class AuditStatus(models.TextChoices):
-    SUCCESS = "SUCCESS", "Success"
-    FAILURE = "FAILURE", "Failure"
-    PARTIAL = "PARTIAL", "Partial"
-
-
-class AuditAction(models.TextChoices):
-    # Pull / push
-    BORROWER_DATA_PULL = "BORROWER_DATA_PULL", "Borrower Data Pull"
-    CREDIT_RESULT_PUSH = "CREDIT_RESULT_PUSH", "Credit Result Push"
-    # Auth
-    AUTH_FAILURE = "AUTH_FAILURE", "Authentication Failure"
-    AUTH_SUCCESS = "AUTH_SUCCESS", "Authentication Success"
-    # Lookups
-    BORROWER_LOOKUP = "BORROWER_LOOKUP", "Borrower Lookup"
-    BORROWER_NOT_FOUND = "BORROWER_NOT_FOUND", "Borrower Not Found"
-    # Changes
-    BORROWER_CREATED = "BORROWER_CREATED", "Borrower Created"
-    BORROWER_UPDATED = "BORROWER_UPDATED", "Borrower Updated"
-    BORROWER_ACTIVATED = "BORROWER_ACTIVATED", "Borrower Activated"
-    BORROWER_DEACTIVATED = "BORROWER_DEACTIVATED", "Borrower Deactivated"
-    LOAN_CREATED = "LOAN_CREATED", "Loan Created"
-    LOAN_UPDATED = "LOAN_UPDATED", "Loan Updated"
-    LOAN_REPAYMENT_ADDED = "LOAN_REPAYMENT_ADDED", "Loan Repayment Added"
-    # System
-    API_KEY_CREATED = "API_KEY_CREATED", "API Key Created"
-    API_KEY_USED = "API_KEY_USED", "API Key Used"
-    API_KEY_REVOKED = "API_KEY_REVOKED", "API Key Revoked"
 
 
 class ConsentStatus(models.TextChoices):

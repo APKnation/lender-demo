@@ -59,6 +59,23 @@ class IsCentralSystem(permissions.BasePermission):
         return getattr(request.user, "role", None) == "CENTRAL_SYSTEM"
 
 
+class IsCentralSystemOrAdmin(permissions.BasePermission):
+    """
+    Allow the DAIRE Central System (API key) or institution ADMIN users.
+    Used for DAIRE data exchange endpoints: ADMIN can send and receive
+    information to/from the central system.
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user or not user.is_authenticated and not hasattr(user, "key_prefix"):
+            return False
+        if hasattr(user, "key_prefix"):
+            # Integration credential (API key)
+            return getattr(user, "role", None) == "CENTRAL_SYSTEM"
+        return getattr(user, "role", None) == "ADMIN" or user.is_superuser
+
+
 class IsAuthenticatedOrKey(permissions.BasePermission):
     """
     Allow access if the user is authenticated via JWT (staff)

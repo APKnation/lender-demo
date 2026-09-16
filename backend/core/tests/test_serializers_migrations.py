@@ -14,8 +14,6 @@ from rest_framework import status
 from core.constants import (
     AccountStatus,
     AccountType,
-    AuditAction,
-    AuditStatus,
     Currency,
     DefaultStatus,
     EmploymentStatus,
@@ -30,7 +28,6 @@ from core.constants import (
 from core.models import (
     Account,
     AccountBalanceHistory,
-    AuditLog,
     Borrower,
     BusinessInformation,
     Consent,
@@ -134,7 +131,7 @@ class SerializerTests(TestCase):
         data = serializer.data
         self.assertEqual(data["borrower_reference"], "BRW-TZ-1001")
         self.assertEqual(data["full_name"], "Amina Juma")
-        self.assertEqual(data["income"], Decimal("1200000.00"))
+        self.assertEqual(data["income"], "1200000.00")
         self.assertEqual(data["currency"], "TZS")
 
     def test_normalized_borrower_excludes_national_id_hash(self):
@@ -186,7 +183,7 @@ class SerializerTests(TestCase):
         serializer = LoanSerializer(self.loan)
         data = serializer.data
         self.assertEqual(data["loan_id"], "LOAN-NMB-001")
-        self.assertEqual(data["loan_amount"], Decimal("2000000.00"))
+        self.assertEqual(data["loan_amount"], "2000000.00")
         self.assertEqual(data["status"], LoanStatus.ACTIVE)
         self.assertIn("account_reference", data)
 
@@ -194,7 +191,7 @@ class SerializerTests(TestCase):
         serializer = LoanRepaymentSerializer(self.repayment)
         data = serializer.data
         self.assertEqual(data["loan_reference"], "LOAN-NMB-001")
-        self.assertEqual(data["repayment_amount"], Decimal("90000.00"))
+        self.assertEqual(data["repayment_amount"], "90000.00")
         self.assertEqual(data["default_status"], DefaultStatus.CURRENT)
 
     def test_transaction_serializer_fields(self):
@@ -202,7 +199,7 @@ class SerializerTests(TestCase):
         data = serializer.data
         self.assertEqual(data["transaction_id"], "TXN-001")
         self.assertEqual(data["direction"], TransactionDirection.CREDIT)
-        self.assertEqual(data["amount"], Decimal("500000.00"))
+        self.assertEqual(data["amount"], "500000.00")
 
     def test_business_info_serializer(self):
         BusinessInformation.objects.create(

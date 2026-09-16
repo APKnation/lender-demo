@@ -227,7 +227,7 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "borrowers", "description": "Borrower lookup and normalised data"},
         {"name": "central", "description": "DAIRE Central System integration (pull / push)"},
-        {"name": "audit", "description": "Audit and compliance logs"},
+        {"name": "admin", "description": "Admin operations (loan review, DAIRE data exchange)"},
         {"name": "health", "description": "Health checks"},
     ],
 }

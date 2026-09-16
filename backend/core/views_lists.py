@@ -7,7 +7,6 @@ returning data for borrowers the caller is authorised to see.
 """
 from rest_framework import generics
 
-from .constants import AuditAction, AuditStatus
 from .models import Account, Loan, LoanRepayment, Transaction
 from .permissions import IsAuthenticatedOrKey
 from .serializers import (
@@ -17,7 +16,7 @@ from .serializers import (
     TransactionSerializer,
     NormalizedBorrowerSerializer,
 )
-from core.models import Borrower, AuditLog
+from core.models import Borrower
 
 
 class BorrowerListView(generics.ListAPIView):

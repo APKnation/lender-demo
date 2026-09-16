@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models import AuditLog, Borrower, Loan
+from .models import Borrower, Loan
 from .permissions import IsBorrower
 from .serializers import NormalizedBorrowerSerializer
 
@@ -36,13 +36,6 @@ class BorrowerPortalMeView(APIView):
         for account in data.get("accounts", []):
             account.pop("risk_score", None)
 
-        AuditLog.record(
-            action="BORROWER_LOOKUP",
-            status="SUCCESS",
-            identity=request.user.email,
-            borrower_reference=borrower.borrower_reference,
-            log_type="portal",
-        )
         return Response(data)
 
 
@@ -50,6 +43,7 @@ class BorrowerPortalLoanApplyView(APIView):
     """
     Allow a borrower to apply for a new loan.
     Creates a Loan with status=PENDING linked to the borrower's first account.
+    An ADMIN reviews and approves or rejects it afterwards.
     """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsBorrower]
@@ -103,18 +97,10 @@ class BorrowerPortalLoanApplyView(APIView):
             outstanding_balance=amount,
             loan_date=tz.now().date(),
             loan_duration_months=duration_months,
-            interest_rate=Decimal("12.00"),  # Default rate — bank officer will review
+            interest_rate=Decimal("12.00"),  # Default rate — admin will review
             currency=borrower.currency,
+            purpose=purpose,
             status="PENDING",
-        )
-
-        AuditLog.record(
-            action="LOAN_CREATED",
-            status="SUCCESS",
-            identity=request.user.email,
-            borrower_reference=borrower.borrower_reference,
-            log_type="portal",
-            metadata={"loan_id": loan_id, "amount": str(amount), "purpose": purpose},
         )
 
         return Response(

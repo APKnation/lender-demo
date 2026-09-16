@@ -11,14 +11,14 @@ import { ApiService, LoanApplicationResponse } from '../services/api.service';
   template: `
     <div class="apply-page">
       <div class="apply-header">
-        <a routerLink="/portal" class="btn btn-ghost btn-sm">← Back to My Account</a>
+        <a routerLink="/portal" class="btn btn-ghost btn-sm">Back to My Account</a>
         <h1>Apply for a Loan</h1>
         <p class="text-muted">Fill in the details below to submit your loan application. A bank officer will review and approve it.</p>
       </div>
 
       <!-- Success State -->
       <div *ngIf="result() as res" class="result-card">
-        <div class="result-icon">✅</div>
+        <div class="result-icon">OK</div>
         <h2>Application Submitted!</h2>
         <p>{{ res.message }}</p>
         <div class="result-details">
@@ -204,12 +204,12 @@ export class BorrowerApplyLoanComponent {
   form = { amount: null as number | null, duration_months: '', purpose: '' };
 
   purposes = [
-    { icon: '🏠', label: 'Home Improvement', value: 'HOME_IMPROVEMENT' },
-    { icon: '🏥', label: 'Medical', value: 'MEDICAL' },
-    { icon: '📚', label: 'Education', value: 'EDUCATION' },
-    { icon: '💼', label: 'Business', value: 'BUSINESS' },
-    { icon: '🚗', label: 'Vehicle', value: 'VEHICLE' },
-    { icon: '📦', label: 'Other', value: 'OTHER' },
+    { icon: '', label: 'Home Improvement', value: 'HOME_IMPROVEMENT' },
+    { icon: '', label: 'Medical', value: 'MEDICAL' },
+    { icon: '', label: 'Education', value: 'EDUCATION' },
+    { icon: '', label: 'Business', value: 'BUSINESS' },
+    { icon: '', label: 'Vehicle', value: 'VEHICLE' },
+    { icon: '', label: 'Other', value: 'OTHER' },
   ];
 
   get monthlyPayment(): number {

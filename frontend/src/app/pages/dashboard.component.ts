@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.service';
+import { ApiService, Borrower, Loan, CreditResult } from '../services/api.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,56 +15,74 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
         <div class="spinner" style="width:36px;height:36px;border-width:3px"></div>
         <p>Loading dashboard data…</p>
       </div>
+      <!-- Loan Approvals -->
+      <div class="card section-card approvals-card">
+        <div class="section-header">
+          <h2>Pending Loan Approvals</h2>
+          <a routerLink="/loan-approvals" class="btn btn-outline btn-sm">Review All</a>
+        </div>
+        <div class="credit-list" *ngIf="pendingLoans().length > 0">
+          <div *ngFor="let l of pendingLoans().slice(0, 5)" class="credit-item">
+            <div class="credit-ref">{{ l.loan_id }}</div>
+            <div><strong>TZS {{ formatBalance(l.loan_amount) }}</strong></div>
+            <div class="text-muted" style="font-size:0.75rem">{{ l.loan_duration_months }} months</div>
+            <a routerLink="/loan-approvals" class="btn btn-ghost btn-sm">Review</a>
+          </div>
+        </div>
+        <div *ngIf="pendingLoans().length === 0" class="empty-state">
+          <p>No pending loan applications</p>
+        </div>
+      </div>
 
       <ng-container *ngIf="!loading()">
         <!-- KPI Cards -->
         <div class="kpi-grid">
           <div class="kpi-card">
-            <div class="kpi-icon" style="background:#dbeafe;color:#1e40af">👥</div>
+            <div class="kpi-icon kpi-icon-blue">T</div>
             <div class="kpi-body">
               <div class="kpi-value">{{ borrowers().length }}</div>
               <div class="kpi-label">Total Borrowers</div>
             </div>
-            <a routerLink="/borrowers" class="kpi-link">View →</a>
+            <a routerLink="/borrowers" class="kpi-link">View &rsaquo;</a>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon" style="background:#d1fae5;color:#065f46">🏦</div>
+            <div class="kpi-icon kpi-icon-green">A</div>
             <div class="kpi-body">
               <div class="kpi-value">{{ totalAccounts() }}</div>
               <div class="kpi-label">Active Accounts</div>
             </div>
-            <a routerLink="/accounts" class="kpi-link">View →</a>
+            <a routerLink="/accounts" class="kpi-link">View &rsaquo;</a>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon" style="background:#fef3c7;color:#92400e">💳</div>
+            <div class="kpi-icon kpi-icon-amber">L</div>
             <div class="kpi-body">
               <div class="kpi-value">{{ totalLoans() }}</div>
               <div class="kpi-label">Active Loans</div>
             </div>
-            <a routerLink="/loans" class="kpi-link">View →</a>
+            <a routerLink="/loans" class="kpi-link">View &rsaquo;</a>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon" style="background:#ede9fe;color:#5b21b6">💰</div>
+            <div class="kpi-icon kpi-icon-violet">P</div>
             <div class="kpi-body">
               <div class="kpi-value">{{ formatBalance(totalBalance()) }}</div>
               <div class="kpi-label">Total Portfolio Balance</div>
             </div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon" style="background:#fee2e2;color:#991b1b">⚠️</div>
+            <div class="kpi-icon kpi-icon-red">R</div>
             <div class="kpi-body">
               <div class="kpi-value">{{ highRiskCount() }}</div>
               <div class="kpi-label">High Risk Borrowers</div>
             </div>
-            <a routerLink="/credit-results" class="kpi-link">View →</a>
+            <a routerLink="/credit-results" class="kpi-link">View &rsaquo;</a>
           </div>
           <div class="kpi-card">
-            <div class="kpi-icon" style="background:#f0fdf4;color:#166534">📋</div>
+            <div class="kpi-icon kpi-icon-teal">C</div>
             <div class="kpi-body">
-              <div class="kpi-value">{{ recentLogs().length }}</div>
-              <div class="kpi-label">Recent Audit Events</div>
+              <div class="kpi-value">{{ recentCreditResults().length }}</div>
+              <div class="kpi-label">Credit Results</div>
             </div>
-            <a routerLink="/audit-logs" class="kpi-link">View →</a>
+            <a routerLink="/credit-results" class="kpi-link">View &rsaquo;</a>
           </div>
         </div>
 
@@ -125,50 +143,9 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
                 <div class="text-muted" style="font-size:0.75rem">{{ r.received_at | date:'dd MMM' }}</div>
               </div>
               <div *ngIf="recentCreditResults().length === 0" class="empty-state">
-                <div class="empty-icon">⭐</div>
+                <div class="empty-icon">Cr</div>
                 <p>No credit results yet</p>
               </div>
-            </div>
-          </div>
-
-          <!-- Audit Logs -->
-          <div class="card section-card span-2">
-            <div class="section-header">
-              <h2>Recent Audit Events</h2>
-              <a routerLink="/audit-logs" class="btn btn-outline btn-sm">View All</a>
-            </div>
-            <div class="table-wrap">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Action</th>
-                    <th>Borrower</th>
-                    <th>Status</th>
-                    <th>Identity</th>
-                    <th>IP</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let log of recentLogs()">
-                    <td class="text-muted" style="white-space:nowrap;font-size:0.78rem">
-                      {{ log.timestamp | date:'dd MMM HH:mm' }}
-                    </td>
-                    <td><code class="action-code">{{ log.action }}</code></td>
-                    <td>{{ log.borrower_reference || '–' }}</td>
-                    <td>
-                      <span class="badge" [class]="log.status === 'SUCCESS' ? 'badge-success' : log.status === 'FAILURE' ? 'badge-danger' : 'badge-warning'">
-                        {{ log.status }}
-                      </span>
-                    </td>
-                    <td class="text-muted" style="font-size:0.8rem">{{ log.identity || '–' }}</td>
-                    <td class="text-muted" style="font-size:0.78rem">{{ log.source_ip || '–' }}</td>
-                  </tr>
-                  <tr *ngIf="recentLogs().length === 0">
-                    <td colspan="6" class="empty-state">No audit logs found.</td>
-                  </tr>
-                </tbody>
-              </table>
             </div>
           </div>
 
@@ -262,6 +239,18 @@ import { ApiService, Borrower, AuditLog, CreditResult } from '../services/api.se
     .ref { font-size: 0.75rem; background: var(--surface-3); padding: 2px 6px; border-radius: 4px; font-family: monospace; }
     .action-code { font-size: 0.72rem; background: var(--surface-3); padding: 2px 5px; border-radius: 4px; font-family: monospace; }
 
+    /* Pending approvals card */
+    .approvals-card { margin-bottom: 1.25rem; }
+    .approvals-card .credit-item { align-items: center; }
+
+    /* KPI icon letter tiles */
+    .kpi-icon-blue { background:#dbeafe; color:#1e40af; }
+    .kpi-icon-green { background:#d1fae5; color:#065f46; }
+    .kpi-icon-amber { background:#fef3c7; color:#92400e; }
+    .kpi-icon-violet { background:#ede9fe; color:#5b21b6; }
+    .kpi-icon-red { background:#fee2e2; color:#991b1b; }
+    .kpi-icon-teal { background:#ccfbf1; color:#115e59; }
+
     /* Credit results */
     .credit-list { display: flex; flex-direction: column; gap: 0.75rem; }
     .credit-item {
@@ -303,7 +292,7 @@ export class DashboardComponent implements OnInit {
   private api = inject(ApiService);
 
   borrowers = signal<Borrower[]>([]);
-  recentLogs = signal<AuditLog[]>([]);
+  pendingLoans = signal<Loan[]>([]);
   recentCreditResults = signal<CreditResult[]>([]);
   loading = signal(true);
 
@@ -341,8 +330,8 @@ export class DashboardComponent implements OnInit {
       error: () => checkDone(),
     });
 
-    this.api.getAuditLogs({ limit: '20' }).subscribe({
-      next: data => { this.recentLogs.set(Array.isArray(data) ? data.slice(0, 20) : []); checkDone(); },
+    this.api.listPendingLoans().subscribe({
+      next: data => { this.pendingLoans.set(Array.isArray(data) ? data : []); checkDone(); },
       error: () => checkDone(),
     });
 

@@ -1,29 +1,16 @@
 """
-Signal handlers – borrower reference generation, audit trail on changes.
+Signal handlers – borrower reference generation and profile provisioning.
+
+Note: the audit trail was removed from this project; signals no longer
+write audit entries.
 """
 from django.conf import settings
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import pre_save, post_save
 from django.dispatch import receiver
 
-from .constants import AuditAction, AuditStatus
-from .models import (
-    AuditLog,
-    Borrower,
-    Institution,
-    Loan,
-    LoanRepayment,
-)
+from .models import Borrower
 
 
-def _get_request():
-    """Best-effort retrieval of the current request object."""
-    from lender.middleware import get_current_request
-    return get_current_request()
-
-
-# ------------------------------------------------------------------ #
-# Borrower: auto-generate reference & hash national ID
-# ------------------------------------------------------------------ #
 @receiver(pre_save, sender=Borrower)
 def borrower_pre_save(sender, instance, **kwargs):
     # Hash national ID before saving
@@ -56,76 +43,3 @@ def borrower_post_save(sender, instance, created, **kwargs):
         except Exception:
             from .models import CustomerProfile
             CustomerProfile.objects.get_or_create(borrower=instance)
-
-    req = _get_request()
-    action = AuditAction.BORROWER_CREATED if created else AuditAction.BORROWER_UPDATED
-    identity = ""
-    if req and hasattr(req, "user"):
-        identity = getattr(req.user, "email", str(req.user)) if req.user.is_authenticated else ""
-    AuditLog.record(
-        action=action,
-        status=AuditStatus.SUCCESS,
-        identity=identity,
-        borrower_reference=instance.borrower_reference,
-        source_ip=req.META.get("REMOTE_ADDR") if req else None,
-        request_id=getattr(req, "correlation_id", "") if req else "",
-        fields_returned=["full_name", "customer_id"] if created else ["updated_fields"],
-        log_type="model_change",
-    )
-
-
-# ------------------------------------------------------------------ #
-# Activate / deactivate tracking
-# ------------------------------------------------------------------ #
-@receiver(pre_save, sender=Borrower)
-def borrower_activation_change(sender, instance, **kwargs):
-    if instance.pk:
-        try:
-            old = Borrower.objects.get(pk=instance.pk)
-        except Borrower.DoesNotExist:
-            return
-        if old.is_active and not instance.is_active:
-            AuditLog.record(
-                action=AuditAction.BORROWER_DEACTIVATED,
-                status=AuditStatus.SUCCESS,
-                borrower_reference=instance.borrower_reference,
-                identity=getattr(_get_request() and _get_request().user, "email", ""),
-            )
-        elif not old.is_active and instance.is_active:
-            AuditLog.record(
-                action=AuditAction.BORROWER_ACTIVATED,
-                status=AuditStatus.SUCCESS,
-                borrower_reference=instance.borrower_reference,
-                identity=getattr(_get_request() and _get_request().user, "email", ""),
-            )
-
-
-# ------------------------------------------------------------------ #
-# Loan / Repayment change audit
-# ------------------------------------------------------------------ #
-@receiver(post_save, sender=Loan)
-def loan_post_save(sender, instance, created, **kwargs):
-    action = AuditAction.LOAN_CREATED if created else AuditAction.LOAN_UPDATED
-    req = _get_request()
-    AuditLog.record(
-        action=action,
-        status=AuditStatus.SUCCESS,
-        borrower_reference=instance.borrower.borrower_reference,
-        source_ip=req.META.get("REMOTE_ADDR") if req else None,
-        request_id=getattr(req, "correlation_id", "") if req else "",
-        log_type="model_change",
-    )
-
-
-@receiver(post_save, sender=LoanRepayment)
-def repayment_post_save(sender, instance, created, **kwargs):
-    if created:
-        req = _get_request()
-        AuditLog.record(
-            action=AuditAction.LOAN_REPAYMENT_ADDED,
-            status=AuditStatus.SUCCESS,
-            borrower_reference=instance.borrower.borrower_reference,
-            source_ip=req.META.get("REMOTE_ADDR") if req else None,
-            request_id=getattr(req, "correlation_id", "") if req else "",
-            log_type="model_change",
-        )

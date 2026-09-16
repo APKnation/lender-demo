@@ -19,8 +19,6 @@ from django.test import TestCase
 from core.constants import (
     AccountStatus,
     AccountType,
-    AuditAction,
-    AuditStatus,
     Currency,
     DefaultStatus,
     EmploymentStatus,
@@ -35,7 +33,6 @@ from core.constants import (
 from core.models import (
     Account,
     AccountBalanceHistory,
-    AuditLog,
     Borrower,
     BusinessInformation,
     Consent,
