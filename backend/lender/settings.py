@@ -31,6 +31,9 @@ WSGI_APPLICATION = "lender.wsgi.application"
 ASGI_APPLICATION = "lender.asgi.application"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Custom user model with role-based access control
+AUTH_USER_MODEL = "core.CustomUser"
+
 # --------------------------------------------------------------------------- #
 # Institution configuration
 # --------------------------------------------------------------------------- #

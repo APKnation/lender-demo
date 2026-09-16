@@ -601,3 +601,76 @@ class AuditLog(models.Model):
             fields_returned=fields_returned or [],
             metadata=metadata or {},
         )
+
+
+# =========================================================================== #
+#  Custom user
+# =========================================================================== #
+from django.contrib.auth.models import (  # noqa: E402
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
+from django.contrib.postgres.fields import ArrayField  # noqa: E402
+
+
+class CustomUserManager(BaseUserManager):
+    """Manager for the custom user model (email-based)."""
+
+    use_in_migrations = True
+
+    def _create_user(self, email, password, **extra):
+        if not email:
+            raise ValueError("Users must have an email address.")
+        email = self.normalize_email(email)
+        user = self.model(email=email, **extra)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None, **extra):
+        extra.setdefault("is_staff", False)
+        extra.setdefault("is_superuser", False)
+        return self._create_user(email, password, **extra)
+
+    def create_superuser(self, email, password, **extra):
+        extra.setdefault("is_staff", True)
+        extra.setdefault("is_superuser", True)
+        extra.setdefault("is_active", True)
+        return self._create_user(email, password, **extra)
+
+
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    """
+    Custom user model with role-based access control.
+
+    Roles: ADMIN, DATA_OFFICER, AUDITOR, READ_ONLY
+    """
+
+    email = models.EmailField(unique=True, max_length=255)
+    full_name = models.CharField(max_length=255, blank=True)
+    role = models.CharField(max_length=30, choices=Role.choices, default=Role.READ_ONLY)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    date_joined = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(blank=True, null=True)
+
+    USERNAME_FIELD = "email"
+    EMAIL_FIELD = "email"
+    REQUIRED_FIELDS = []
+
+    objects = CustomUserManager()
+
+    class Meta:
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
+    def __str__(self):
+        return f"{self.email} ({self.role})"
+
+    @property
+    def institution(self):
+        try:
+            return Institution.objects.get(lender_id=getattr(settings, "LENDER_ID", ""))
+        except (Institution.DoesNotExist, Exception):
+            return None

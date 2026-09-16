@@ -23,7 +23,9 @@ from .models import (
     BusinessInformation,
     Consent,
     CreditResult,
+    CustomerProfile,
     IntegrationCredential,
+    Institution,
     Loan,
     LoanRepayment,
     Transaction,
@@ -122,7 +124,7 @@ class ConsentSerializer(serializers.ModelSerializer):
 
 class CustomerProfileSerializer(serializers.ModelSerializer):
     class Meta:
-        model = __import__("core.models", fromlist=["CustomerProfile"]).CustomerProfile
+        model = CustomerProfile
         fields = ["risk_score", "kyc_status", "date_of_birth", "address",
                   "city", "postal_code", "branch", "occupation", "employer",
                   "updated_at"]
