@@ -105,6 +105,31 @@ export interface CreditResult {
   created_at: string;
 }
 
+export interface DataExchangeLogEntry {
+  id: number;
+  direction: 'PUSH' | 'PULL';
+  status: 'SUCCESS' | 'FAILED';
+  borrower_references: string[] | null;
+  record_count: number;
+  detail: string;
+  created_at: string;
+}
+
+export interface DaireConnection {
+  central_system_url: string;
+  source: 'db' | 'env';
+  institution_name: string;
+  lender_id: string;
+}
+
+export interface DaireConnectionTestResult {
+  ok: boolean;
+  url: string;
+  latency_ms: number;
+  detail: string;
+  response?: any;
+}
+
 export interface LoanReviewResponse {
   detail: string;
   loan: Loan;
@@ -229,6 +254,32 @@ export class ApiService {
       borrower_reference: borrowerReference,
       requested_fields: requestedFields,
     });
+  }
+
+  dairePushData(borrowerReferences: string[] = []): Observable<any> {
+    return this.http.post(`${this.base}/admin/daire/push-data/`, {
+      borrower_references: borrowerReferences,
+    });
+  }
+
+  daireExchangeLog(): Observable<DataExchangeLogEntry[]> {
+    return this.http.get<DataExchangeLogEntry[]>(`${this.base}/admin/daire/exchange-log/`);
+  }
+
+  getDaireConnection(): Observable<DaireConnection> {
+    return this.http.get<DaireConnection>(`${this.base}/admin/daire/connection/`);
+  }
+
+  saveDaireConnection(url: string): Observable<DaireConnection & { detail: string }> {
+    return this.http.put<DaireConnection & { detail: string }>(
+      `${this.base}/admin/daire/connection/`, { central_system_url: url }
+    );
+  }
+
+  testDaireConnection(): Observable<DaireConnectionTestResult> {
+    return this.http.post<DaireConnectionTestResult>(
+      `${this.base}/admin/daire/connection/test/`, {}
+    );
   }
 
   // Borrower Portal

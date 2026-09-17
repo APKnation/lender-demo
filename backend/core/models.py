@@ -633,3 +633,41 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             return Institution.objects.get(lender_id=getattr(settings, "LENDER_ID", ""))
         except (Institution.DoesNotExist, Exception):
             return None
+
+
+class DataExchangeLog(models.Model):
+    """
+    Log of data exchanges with the DAIRE Central System.
+
+    Records every PUSH (this institution sends borrower data to DAIRE for
+    merging) and every PULL (this institution requests/receives data from
+    DAIRE), so admins can see the full exchange history in the UI.
+    """
+
+    class Direction(models.TextChoices):
+        PUSH = "PUSH", "Push (sent to DAIRE)"
+        PULL = "PULL", "Pull (received from DAIRE)"
+
+    class Status(models.TextChoices):
+        SUCCESS = "SUCCESS", "Success"
+        FAILED = "FAILED", "Failed"
+
+    direction = models.CharField(max_length=10, choices=Direction.choices)
+    status = models.CharField(max_length=10, choices=Status.choices)
+    borrower_references = models.JSONField(blank=True, null=True)
+    record_count = models.PositiveIntegerField(default=0)
+    detail = models.TextField(blank=True)
+    triggered_by = models.ForeignKey(
+        CustomUser, on_delete=models.SET_NULL, blank=True, null=True,
+        related_name="daire_exchanges",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        verbose_name = "Data Exchange Log"
+        verbose_name_plural = "Data Exchange Logs"
+
+    def __str__(self):
+        return f"{self.direction} {self.status} ({self.record_count} records) at {self.created_at:%Y-%m-%d %H:%M}"
+

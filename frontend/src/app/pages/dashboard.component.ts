@@ -2,11 +2,12 @@ import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ApiService, Borrower, Loan, CreditResult } from '../services/api.service';
+import { CountUpDirective } from '../shared/count-up.directive';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, CountUpDirective],
   template: `
     <div class="space-y-6">
       <!-- Page intro -->
@@ -27,11 +28,11 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
       </div>
 
       <ng-container *ngIf="!loading()">
+        <div class="stagger space-y-6">
         <!-- Pending approvals banner -->
         <div class="card border-l-4 border-l-amber-500">
           <div class="flex items-center justify-between gap-3 mb-4">
             <div class="flex items-center gap-2.5">
-              <span class="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 font-bold text-xs flex items-center justify-center">Ap</span>
               <h2 class="text-base mb-0">Pending Loan Approvals</h2>
               <span class="badge badge-warning">{{ pendingLoans().length }}</span>
             </div>
@@ -59,37 +60,31 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
         <!-- KPI Cards -->
         <div class="grid grid-cols-2 md:grid-cols-3 2xl:grid-cols-6 gap-4">
           <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-blue-100 transition">
-            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-bold mb-3 shadow-sm">T</div>
-            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ borrowers().length }}</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink" [appCountUp]="borrowers().length">0</div>
             <div class="text-xs text-ink-soft mt-1.5">Total Borrowers</div>
             <a routerLink="/borrowers" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
           <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-emerald-100 transition">
-            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center font-bold mb-3 shadow-sm">A</div>
-            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ totalAccounts() }}</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink" [appCountUp]="totalAccounts()">0</div>
             <div class="text-xs text-ink-soft mt-1.5">Active Accounts</div>
             <a routerLink="/accounts" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
           <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-amber-100 transition">
-            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-amber-500 to-orange-600 text-white flex items-center justify-center font-bold mb-3 shadow-sm">L</div>
-            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ totalLoans() }}</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink" [appCountUp]="totalLoans()">0</div>
             <div class="text-xs text-ink-soft mt-1.5">Active Loans</div>
             <a routerLink="/loans" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
           <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-violet-100 transition">
-            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-violet-500 to-purple-700 text-white flex items-center justify-center font-bold mb-3 shadow-sm">P</div>
-            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ formatBalance(totalBalance()) }}</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink" [appCountUp]="totalBalance()" [appCountUpPrefix]="'TZS '">0</div>
             <div class="text-xs text-ink-soft mt-1.5">Portfolio Balance</div>
           </div>
           <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-rose-100 transition">
-            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-rose-500 to-red-600 text-white flex items-center justify-center font-bold mb-3 shadow-sm">R</div>
-            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ highRiskCount() }}</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink" [appCountUp]="highRiskCount()">0</div>
             <div class="text-xs text-ink-soft mt-1.5">High Risk Borrowers</div>
             <a routerLink="/credit-results" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
           <div class="card !p-5 group hover:shadow-md hover:-translate-y-0.5 hover:ring-2 hover:ring-teal-100 transition">
-            <div class="w-11 h-11 rounded-xl bg-linear-to-br from-teal-500 to-cyan-600 text-white flex items-center justify-center font-bold mb-3 shadow-sm">C</div>
-            <div class="text-[1.55rem] font-extrabold leading-none text-ink">{{ recentCreditResults().length }}</div>
+            <div class="text-[1.55rem] font-extrabold leading-none text-ink" [appCountUp]="recentCreditResults().length">0</div>
             <div class="text-xs text-ink-soft mt-1.5">Credit Results</div>
             <a routerLink="/credit-results" class="mt-2.5 inline-block text-xs font-medium text-primary no-underline group-hover:underline">View &rsaquo;</a>
           </div>
@@ -100,10 +95,7 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
           <!-- Borrower Summary Table -->
           <div class="card lg:col-span-2">
             <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center">Br</span>
-                <h2 class="text-base mb-0">Borrower Portfolio</h2>
-              </div>
+              <h2 class="text-base mb-0">Borrower Portfolio</h2>
               <a routerLink="/borrowers" class="btn btn-outline btn-sm">View All</a>
             </div>
             <div class="table-wrap">
@@ -146,10 +138,7 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
           <!-- Credit Results -->
           <div class="card">
             <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 font-bold text-xs flex items-center justify-center">Cr</span>
-                <h2 class="text-base mb-0">Credit Results</h2>
-              </div>
+              <h2 class="text-base mb-0">Credit Results</h2>
               <a routerLink="/credit-results" class="btn btn-outline btn-sm">All</a>
             </div>
             <div class="flex flex-col">
@@ -178,20 +167,17 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
           <!-- Loan Status Distribution -->
           <div class="card xl:col-span-2">
             <div class="flex items-center justify-between mb-5">
-              <div class="flex items-center gap-2.5">
-                <span class="w-8 h-8 rounded-lg bg-violet-100 text-violet-700 font-bold text-xs flex items-center justify-center">Ln</span>
-                <h2 class="text-base mb-0">Loan Status Distribution</h2>
-              </div>
+              <h2 class="text-base mb-0">Loan Status Distribution</h2>
               <a routerLink="/loans" class="btn btn-outline btn-sm">View All</a>
             </div>
             <div class="grid gap-5 sm:grid-cols-2">
-              <div *ngFor="let s of loanStats()">
+              <div *ngFor="let s of loanStats(); let i = index">
                 <div class="flex justify-between items-baseline mb-1.5">
                   <span class="text-sm font-medium text-ink">{{ s.label }}</span>
                   <span class="text-sm font-bold">{{ s.count }} <span class="text-xs font-normal text-muted">({{ s.pct }}%)</span></span>
                 </div>
                 <div class="bg-surface-3 rounded-full h-2.5 overflow-hidden">
-                  <div class="h-full rounded-full transition-all duration-1000" [style.width.%]="s.pct" [style.background]="s.color"></div>
+                  <div class="h-full rounded-full anim-bar" [style.width.%]="s.pct" [style.background]="s.color" [style.animationDelay]="200 + i * 90 + 'ms'"></div>
                 </div>
               </div>
               <div *ngIf="loanStats().length === 0" class="empty-state sm:col-span-2"><p>No loans yet</p></div>
@@ -200,29 +186,27 @@ import { ApiService, Borrower, Loan, CreditResult } from '../services/api.servic
 
           <!-- Quick actions -->
           <div class="card">
-            <div class="flex items-center gap-2.5 mb-4">
-              <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 font-bold text-xs flex items-center justify-center">Qa</span>
-              <h2 class="text-base mb-0">Quick Actions</h2>
-            </div>
+            <h2 class="text-base mb-4">Quick Actions</h2>
             <div class="grid gap-2.5">
-              <a routerLink="/loan-approvals" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition group">
-                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">Ap</strong> Approve pending loans</span>
+              <a routerLink="/loan-approvals" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition">
+                <span>Approve pending loans</span>
                 <span class="badge badge-warning">{{ pendingLoans().length }}</span>
               </a>
               <a routerLink="/daire" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition">
-                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">DC</strong> DAIRE data exchange</span>
+                <span>DAIRE data exchange</span>
                 <span class="text-muted">&rsaquo;</span>
               </a>
               <a routerLink="/borrowers" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition">
-                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">Br</strong> Browse borrowers</span>
+                <span>Browse borrowers</span>
                 <span class="text-muted">&rsaquo;</span>
               </a>
               <a routerLink="/integration-settings" class="flex items-center justify-between rounded-lg border border-line px-4 py-3 text-sm no-underline text-ink hover:border-primary hover:bg-primary-light transition">
-                <span class="flex items-center gap-2.5"><strong class="w-6 text-center text-primary">Ak</strong> Manage API keys</span>
+                <span>Manage API keys</span>
                 <span class="text-muted">&rsaquo;</span>
               </a>
             </div>
           </div>
+        </div>
         </div>
       </ng-container>
     </div>
